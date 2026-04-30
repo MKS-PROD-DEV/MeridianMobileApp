@@ -146,6 +146,8 @@ final class SettingsViewController: UITableViewController {
         }
       }
 
+      ScormProgressStore.shared.clearAll()
+
       let success = UIAlertController(
         title: "Done",
         message: "All downloaded content has been cleared.",

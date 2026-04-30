@@ -26,8 +26,6 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
   private let assetId: String
   private let scoId: String
 
-  private var storeKey: String { "scorm.cmi.\(assetId).\(scoId)" }
-
   init(assetId: String, scoId: String, launchFileURL: URL, readAccessURL: URL, injectedJS: String) {
     self.assetId = assetId
     self.scoId = scoId
@@ -100,7 +98,7 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
 
     switch op {
     case "load":
-      let json = UserDefaults.standard.string(forKey: storeKey) ?? "{}"
+      let json = ScormProgressStore.shared.loadCMI(assetId: assetId, scoId: scoId) ?? "{}"
       let js = "window.__scormNativeStoreLoad && window.__scormNativeStoreLoad(\(json));"
       webView.evaluateJavaScript(js, completionHandler: nil)
 
@@ -108,7 +106,7 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
       if let cmiObj = body["cmi"],
          let data = try? JSONSerialization.data(withJSONObject: cmiObj, options: []),
          let json = String(data: data, encoding: .utf8) {
-        UserDefaults.standard.set(json, forKey: storeKey)
+        ScormProgressStore.shared.saveCMI(assetId: assetId, scoId: scoId, cmiJSON: json)
       }
 
     default:

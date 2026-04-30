@@ -1,4 +1,5 @@
 import Foundation
+import UniformTypeIdentifiers
 import ZIPFoundation
 
 enum ScormError: Error {
@@ -55,10 +56,42 @@ final class ScormUtils {
     }
 
     return items.compactMap { url in
-      let zipURL = url.appendingPathComponent("original.zip")
-      return fm.fileExists(atPath: zipURL.path) ? url.lastPathComponent : nil
+      guard zipFileURL(in: url) != nil else { return nil }
+      return url.lastPathComponent
     }
     .sorted()
+  }
+
+  static func saveDownloadedZip(assetId: String, from sourceURL: URL) throws {
+    let fm = FileManager.default
+    let root = assetsRootURL()
+    let assetDir = assetBaseURL(assetId: assetId)
+    let destinationURL = assetDir.appendingPathComponent(sourceURL.lastPathComponent)
+
+    try fm.createDirectory(at: root, withIntermediateDirectories: true)
+    try fm.createDirectory(at: assetDir, withIntermediateDirectories: true)
+
+    if fm.fileExists(atPath: destinationURL.path) {
+      try fm.removeItem(at: destinationURL)
+    }
+
+    try fm.copyItem(at: sourceURL, to: destinationURL)
+  }
+
+  static func replaceDownloadedZip(assetId: String, filename: String, data: Data) throws {
+    let fm = FileManager.default
+    let root = assetsRootURL()
+    let assetDir = assetBaseURL(assetId: assetId)
+    let destinationURL = assetDir.appendingPathComponent(filename)
+
+    try fm.createDirectory(at: root, withIntermediateDirectories: true)
+    try fm.createDirectory(at: assetDir, withIntermediateDirectories: true)
+
+    if fm.fileExists(atPath: destinationURL.path) {
+      try fm.removeItem(at: destinationURL)
+    }
+
+    try data.write(to: destinationURL, options: .atomic)
   }
 
   static func loadCourse(assetId: String) throws -> ScormCourse {
@@ -75,6 +108,18 @@ final class ScormUtils {
 
     let cleanedTitle = manifest.title?.trimmingCharacters(in: .whitespacesAndNewlines)
     let title = (cleanedTitle?.isEmpty == false) ? cleanedTitle! : assetId
+
+    ScormProgressStore.shared.saveDownloadedCourse(
+      assetId: assetId,
+      title: title,
+      scormDirPath: scormDir.path,
+      manifestTitle: manifest.title,
+      scoCount: manifest.scos.count,
+      downloadStatus: "downloaded"
+    )
+
+    let indexedFiles = buildCourseFileIndex(assetId: assetId, scormDir: scormDir)
+    ScormProgressStore.shared.replaceCourseFiles(assetId: assetId, files: indexedFiles)
 
     return ScormCourse(
       assetId: assetId,
@@ -93,8 +138,10 @@ final class ScormUtils {
   static func unzipIfNeeded(assetId: String) throws -> URL {
     let fm = FileManager.default
     let base = assetBaseURL(assetId: assetId)
-    let zipURL = base.appendingPathComponent("original.zip")
-    if !fm.fileExists(atPath: zipURL.path) { throw ScormError.zipNotFound }
+
+    guard let zipURL = zipFileURL(in: base) else {
+      throw ScormError.zipNotFound
+    }
 
     let scormDir = base.appendingPathComponent("scorm", isDirectory: true)
 
@@ -133,6 +180,87 @@ final class ScormUtils {
 
   static func findLaunchHref(manifestXML: String) -> String? {
     parseManifest(manifestXML: manifestXML)?.firstSco?.href
+  }
+
+  private static func zipFileURL(in directory: URL) -> URL? {
+    let fm = FileManager.default
+
+    guard let items = try? fm.contentsOfDirectory(
+      at: directory,
+      includingPropertiesForKeys: [.isRegularFileKey],
+      options: [.skipsHiddenFiles]
+    ) else {
+      return nil
+    }
+
+    return items
+      .filter { $0.pathExtension.lowercased() == "zip" }
+      .sorted { $0.lastPathComponent.localizedCaseInsensitiveCompare($1.lastPathComponent) == .orderedAscending }
+      .first
+  }
+
+  private static func buildCourseFileIndex(assetId: String, scormDir: URL) -> [CourseFileRecord] {
+    let fm = FileManager.default
+    let now = Date().timeIntervalSince1970
+    var results: [CourseFileRecord] = []
+
+    guard let enumerator = fm.enumerator(
+      at: scormDir,
+      includingPropertiesForKeys: [.isRegularFileKey, .fileSizeKey],
+      options: [.skipsHiddenFiles]
+    ) else {
+      return []
+    }
+
+    for case let fileURL as URL in enumerator {
+      let values = try? fileURL.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey])
+      guard values?.isRegularFile == true else { continue }
+
+      let relativePath = relativePath(from: scormDir, to: fileURL)
+      let mimeType = mimeTypeForFile(at: fileURL)
+      let sizeBytes = Int64(values?.fileSize ?? 0)
+
+      results.append(
+        CourseFileRecord(
+          assetId: assetId,
+          relativePath: relativePath,
+          absolutePath: fileURL.path,
+          mimeType: mimeType,
+          sizeBytes: sizeBytes,
+          createdAt: now,
+          updatedAt: now
+        )
+      )
+    }
+
+    return results.sorted { $0.relativePath < $1.relativePath }
+  }
+
+  private static func relativePath(from baseURL: URL, to fileURL: URL) -> String {
+    let basePath = baseURL.standardizedFileURL.path
+    let filePath = fileURL.standardizedFileURL.path
+
+    guard filePath.hasPrefix(basePath) else {
+      return fileURL.lastPathComponent
+    }
+
+    var relative = String(filePath.dropFirst(basePath.count))
+    if relative.hasPrefix("/") {
+      relative.removeFirst()
+    }
+    return relative
+  }
+
+  private static func mimeTypeForFile(at fileURL: URL) -> String? {
+    let ext = fileURL.pathExtension
+    guard !ext.isEmpty else { return nil }
+
+    if let type = UTType(filenameExtension: ext),
+       let mimeType = type.preferredMIMEType {
+      return mimeType
+    }
+
+    return nil
   }
 }
 

@@ -25,6 +25,7 @@
 		C5EE1A2D2FA2C81500D7DBBF /* ScormCourseListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5EE1A2C2FA2C80D00D7DBBF /* ScormCourseListViewController.swift */; };
 		C5EE1A2F2FA2CD6200D7DBBF /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5EE1A2E2FA2CD5C00D7DBBF /* SettingsViewController.swift */; };
 		C5EE1A312FA2CE0F00D7DBBF /* HelpViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5EE1A302FA2CE0900D7DBBF /* HelpViewController.swift */; };
+		C5EE1A332FA3855700D7DBBF /* ScormProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5EE1A322FA3854500D7DBBF /* ScormProgressStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,6 +48,7 @@
 		C5EE1A2C2FA2C80D00D7DBBF /* ScormCourseListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScormCourseListViewController.swift; sourceTree = "<group>"; };
 		C5EE1A2E2FA2CD5C00D7DBBF /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 		C5EE1A302FA2CE0900D7DBBF /* HelpViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpViewController.swift; sourceTree = "<group>"; };
+		C5EE1A322FA3854500D7DBBF /* ScormProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScormProgressStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,6 +84,7 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				C5EE1A322FA3854500D7DBBF /* ScormProgressStore.swift */,
 				C5EE1A302FA2CE0900D7DBBF /* HelpViewController.swift */,
 				C5EE1A2E2FA2CD5C00D7DBBF /* SettingsViewController.swift */,
 				C5EE1A2C2FA2C80D00D7DBBF /* ScormCourseListViewController.swift */,
@@ -197,6 +200,7 @@
 				C5EE1A292FA2A43100D7DBBF /* ScormAPIShim.swift in Sources */,
 				C5EE1A2B2FA2C3E500D7DBBF /* ScormLessonListViewController.swift in Sources */,
 				C5EE1A2F2FA2CD6200D7DBBF /* SettingsViewController.swift in Sources */,
+				C5EE1A332FA3855700D7DBBF /* ScormProgressStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
