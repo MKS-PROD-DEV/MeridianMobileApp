@@ -1,0 +1,539 @@
+import UIKit
+import WebKit
+import Capacitor
+import Foundation
+import Network
+import ObjectiveC
+
+final class HideKeyboardAccessoryWebView: WKWebView {
+  override var inputAccessoryView: UIView? { nil }
+}
+final class MyViewController: CAPBridgeViewController,
+                              WKUIDelegate,
+                              WKNavigationDelegate,
+                              WKScriptMessageHandler {
+
+  private let monitor = NWPathMonitor()
+  private let monitorQueue = DispatchQueue(label: "MyViewController.NetworkMonitor")
+
+  private var hasResolvedInitialConnectivity = false
+  private var isCurrentlyOnline = true
+  private var startupSequenceCompleted = false
+  private var pendingInitialOnlineState: Bool?
+
+  private let floatingMenuButton: UIButton = {
+    let button = UIButton(type: .custom)
+    button.translatesAutoresizingMaskIntoConstraints = false
+    button.backgroundColor = .systemBackground
+    button.layer.cornerRadius = 28
+    button.layer.masksToBounds = false
+    button.layer.shadowColor = UIColor.black.cgColor
+    button.layer.shadowOpacity = 0.2
+    button.layer.shadowRadius = 8
+    button.layer.shadowOffset = CGSize(width: 0, height: 4)
+
+    if let icon = UIImage(named: "MGLogo") {
+      button.setImage(icon, for: .normal)
+      button.imageView?.contentMode = .scaleAspectFit
+    } else {
+      button.setTitle("MG", for: .normal)
+      button.setTitleColor(.label, for: .normal)
+      button.titleLabel?.font = .boldSystemFont(ofSize: 16)
+    }
+
+    button.alpha = 0
+    button.isHidden = true
+    return button
+  }()
+
+  private let startupOverlay: UIView = {
+    let view = UIView()
+    view.translatesAutoresizingMaskIntoConstraints = false
+    view.backgroundColor = .white
+    return view
+  }()
+
+  private let startupLogoButton: UIButton = {
+    let button = UIButton(type: .custom)
+    button.translatesAutoresizingMaskIntoConstraints = false
+
+    if let icon = UIImage(named: "MGLogo") {
+      button.setImage(icon, for: .normal)
+      button.imageView?.contentMode = .scaleAspectFit
+    } else {
+      button.setTitle("MG", for: .normal)
+      button.setTitleColor(.black, for: .normal)
+      button.titleLabel?.font = .boldSystemFont(ofSize: 42)
+    }
+
+    return button
+  }()
+
+  private let loadingTrackView: UIView = {
+    let view = UIView()
+    view.translatesAutoresizingMaskIntoConstraints = false
+    view.backgroundColor = UIColor.systemGray5
+    view.layer.cornerRadius = 4
+    view.clipsToBounds = true
+    return view
+  }()
+
+  private let loadingFillView: UIView = {
+    let view = UIView()
+    view.translatesAutoresizingMaskIntoConstraints = false
+    view.backgroundColor = UIColor(red: 0/255, green: 131/255, blue: 203/255, alpha: 1.0)
+    view.layer.cornerRadius = 4
+    view.clipsToBounds = true
+    return view
+  }()
+
+  private let loadingStatusLabel: UILabel = {
+    let label = UILabel()
+    label.translatesAutoresizingMaskIntoConstraints = false
+    label.text = "Starting..."
+    label.textColor = .darkGray
+    label.font = .systemFont(ofSize: 16, weight: .medium)
+    label.textAlignment = .center
+    return label
+  }()
+
+  private let offlineTitleLabel: UILabel = {
+    let label = UILabel()
+    label.translatesAutoresizingMaskIntoConstraints = false
+    label.text = "Offline Mode"
+    label.textColor = .label
+    label.font = .systemFont(ofSize: 26, weight: .semibold)
+    label.textAlignment = .center
+    label.alpha = 0
+    label.isHidden = true
+    return label
+  }()
+
+  private let offlineHelpButton: UIButton = {
+    let button = UIButton(type: .system)
+    button.translatesAutoresizingMaskIntoConstraints = false
+    button.setTitle("Help", for: .normal)
+    button.titleLabel?.font = .systemFont(ofSize: 17, weight: .medium)
+    button.alpha = 0
+    button.isHidden = true
+    return button
+  }()
+
+  private let offlineSettingsButton: UIButton = {
+    let button = UIButton(type: .system)
+    button.translatesAutoresizingMaskIntoConstraints = false
+    button.setTitle("Settings", for: .normal)
+    button.titleLabel?.font = .systemFont(ofSize: 17, weight: .medium)
+    button.alpha = 0
+    button.isHidden = true
+    return button
+  }()
+
+  private let offlineLaunchButton: UIButton = {
+    let button = UIButton(type: .system)
+    button.translatesAutoresizingMaskIntoConstraints = false
+    button.setTitle("Launch MGPlayer", for: .normal)
+    button.setTitleColor(.white, for: .normal)
+    button.backgroundColor = UIColor(red: 0/255, green: 131/255, blue: 203/255, alpha: 1.0)
+    button.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
+    button.layer.cornerRadius = 12
+    var config = UIButton.Configuration.filled()
+    config.contentInsets = NSDirectionalEdgeInsets(top: 14, leading: 24, bottom: 14, trailing: 24)
+    button.configuration = config
+    button.alpha = 0
+    button.isHidden = true
+    return button
+  }()
+
+  private var loadingFillWidthConstraint: NSLayoutConstraint?
+  private var startupLogoCenterYConstraint: NSLayoutConstraint?
+  private var startupLogoTopConstraint: NSLayoutConstraint?
+
+  override func viewDidLoad() {
+    super.viewDidLoad()
+
+    guard let webView = self.webView else {
+      print("webView not ready in viewDidLoad")
+      return
+    }
+
+    if let jsPath = Bundle.main.path(forResource: "nativeAssetStore", ofType: "js"),
+       let js = try? String(contentsOfFile: jsPath, encoding: .utf8) {
+      let script = WKUserScript(
+        source: js,
+        injectionTime: .atDocumentStart,
+        forMainFrameOnly: false
+      )
+      webView.configuration.userContentController.addUserScript(script)
+    } else {
+      print("nativeAssetStore.js not found in app bundle. Make sure it's included in Copy Bundle Resources / App target.")
+    }
+
+    let bridgeJS = """
+    window.openOfflineScorm = function(assetId) {
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.openScorm) {
+        window.webkit.messageHandlers.openScorm.postMessage({ assetId: assetId });
+      } else {
+        console.log("openScorm handler not available");
+      }
+    };
+    """
+    let bridgeScript = WKUserScript(
+      source: bridgeJS,
+      injectionTime: .atDocumentStart,
+      forMainFrameOnly: false
+    )
+    webView.configuration.userContentController.addUserScript(bridgeScript)
+
+    webView.uiDelegate = self
+    webView.navigationDelegate = self
+    webView.configuration.userContentController.add(self, name: "openScorm")
+    webView.scrollView.contentInsetAdjustmentBehavior = .always
+
+    setupFloatingMenuButton()
+    setupStartupOverlay()
+    startConnectivityMonitoring()
+    runStartupSequence()
+  }
+
+  deinit {
+    monitor.cancel()
+  }
+
+  private func setupFloatingMenuButton() {
+    view.addSubview(floatingMenuButton)
+    view.bringSubviewToFront(floatingMenuButton)
+
+    NSLayoutConstraint.activate([
+      floatingMenuButton.widthAnchor.constraint(equalToConstant: 56),
+      floatingMenuButton.heightAnchor.constraint(equalToConstant: 56),
+      floatingMenuButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+      floatingMenuButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+    ])
+
+    floatingMenuButton.addTarget(self, action: #selector(showFloatingMenu), for: .touchUpInside)
+  }
+
+  private func setupStartupOverlay() {
+    view.addSubview(startupOverlay)
+
+    NSLayoutConstraint.activate([
+      startupOverlay.topAnchor.constraint(equalTo: view.topAnchor),
+      startupOverlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+      startupOverlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      startupOverlay.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+    ])
+
+    startupOverlay.addSubview(startupLogoButton)
+    startupOverlay.addSubview(loadingTrackView)
+    loadingTrackView.addSubview(loadingFillView)
+    startupOverlay.addSubview(loadingStatusLabel)
+    startupOverlay.addSubview(offlineTitleLabel)
+    startupOverlay.addSubview(offlineHelpButton)
+    startupOverlay.addSubview(offlineSettingsButton)
+    startupOverlay.addSubview(offlineLaunchButton)
+
+    startupLogoCenterYConstraint = startupLogoButton.centerYAnchor.constraint(equalTo: startupOverlay.centerYAnchor, constant: -60)
+    startupLogoTopConstraint = startupLogoButton.topAnchor.constraint(equalTo: startupOverlay.safeAreaLayoutGuide.topAnchor, constant: 24)
+    startupLogoTopConstraint?.isActive = false
+
+    startupLogoCenterYConstraint?.isActive = true
+
+    NSLayoutConstraint.activate([
+      startupLogoButton.centerXAnchor.constraint(equalTo: startupOverlay.centerXAnchor),
+      startupLogoButton.widthAnchor.constraint(equalToConstant: 120),
+      startupLogoButton.heightAnchor.constraint(equalToConstant: 120),
+
+      loadingTrackView.topAnchor.constraint(equalTo: startupLogoButton.bottomAnchor, constant: 28),
+      loadingTrackView.centerXAnchor.constraint(equalTo: startupOverlay.centerXAnchor),
+      loadingTrackView.widthAnchor.constraint(equalToConstant: 220),
+      loadingTrackView.heightAnchor.constraint(equalToConstant: 8),
+
+      loadingFillView.leadingAnchor.constraint(equalTo: loadingTrackView.leadingAnchor),
+      loadingFillView.topAnchor.constraint(equalTo: loadingTrackView.topAnchor),
+      loadingFillView.bottomAnchor.constraint(equalTo: loadingTrackView.bottomAnchor),
+
+      loadingStatusLabel.topAnchor.constraint(equalTo: loadingTrackView.bottomAnchor, constant: 16),
+      loadingStatusLabel.centerXAnchor.constraint(equalTo: startupOverlay.centerXAnchor),
+
+      offlineTitleLabel.topAnchor.constraint(equalTo: startupLogoButton.bottomAnchor, constant: 12),
+      offlineTitleLabel.centerXAnchor.constraint(equalTo: startupOverlay.centerXAnchor),
+
+      offlineHelpButton.topAnchor.constraint(equalTo: offlineTitleLabel.bottomAnchor, constant: 16),
+      offlineHelpButton.leadingAnchor.constraint(equalTo: startupOverlay.safeAreaLayoutGuide.leadingAnchor, constant: 24),
+
+      offlineSettingsButton.topAnchor.constraint(equalTo: offlineTitleLabel.bottomAnchor, constant: 16),
+      offlineSettingsButton.trailingAnchor.constraint(equalTo: startupOverlay.safeAreaLayoutGuide.trailingAnchor, constant: -24),
+
+      offlineLaunchButton.centerXAnchor.constraint(equalTo: startupOverlay.centerXAnchor),
+      offlineLaunchButton.centerYAnchor.constraint(equalTo: startupOverlay.centerYAnchor, constant: 80),
+      offlineLaunchButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 52)
+    ])
+
+    loadingFillWidthConstraint = loadingFillView.widthAnchor.constraint(equalToConstant: 0)
+    loadingFillWidthConstraint?.isActive = true
+
+    startupLogoButton.addTarget(self, action: #selector(offlineLaunchTapped), for: .touchUpInside)
+    startupLogoButton.isUserInteractionEnabled = false
+
+    offlineHelpButton.addTarget(self, action: #selector(offlineHelpTapped), for: .touchUpInside)
+    offlineSettingsButton.addTarget(self, action: #selector(offlineSettingsTapped), for: .touchUpInside)
+    offlineLaunchButton.addTarget(self, action: #selector(offlineLaunchTapped), for: .touchUpInside)
+
+    view.bringSubviewToFront(startupOverlay)
+  }
+
+  private func startConnectivityMonitoring() {
+    monitor.pathUpdateHandler = { [weak self] path in
+      DispatchQueue.main.async {
+        guard let self = self else { return }
+        let online = path.status == .satisfied
+        self.isCurrentlyOnline = online
+
+        if !self.hasResolvedInitialConnectivity {
+          self.hasResolvedInitialConnectivity = true
+          self.pendingInitialOnlineState = online
+          self.finishStartupIfReady()
+        }
+      }
+    }
+
+    monitor.start(queue: monitorQueue)
+  }
+
+  private func runStartupSequence() {
+    loadingStatusLabel.text = "Checking for network..."
+    animateLoadingBar(to: 0.45, duration: 1.4)
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+      guard let self = self else { return }
+      self.loadingStatusLabel.text = "Loading Content..."
+      self.animateLoadingBar(to: 1.0, duration: 1.4)
+    }
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+      guard let self = self else { return }
+      self.startupSequenceCompleted = true
+      self.finishStartupIfReady()
+    }
+  }
+
+  private func animateLoadingBar(to progress: CGFloat, duration: TimeInterval) {
+    let totalWidth: CGFloat = 220
+    loadingFillWidthConstraint?.constant = totalWidth * max(0, min(1, progress))
+    UIView.animate(withDuration: duration) {
+      self.startupOverlay.layoutIfNeeded()
+    }
+  }
+
+  private func finishStartupIfReady() {
+    guard startupSequenceCompleted, let initialOnlineState = pendingInitialOnlineState else { return }
+
+    if initialOnlineState {
+      showOnlineState()
+    } else {
+      showOfflineState()
+    }
+  }
+
+  private func showOnlineState() {
+    startupLogoButton.isUserInteractionEnabled = false
+    floatingMenuButton.isHidden = false
+
+    UIView.animate(withDuration: 0.3, animations: {
+      self.startupOverlay.alpha = 0
+      self.floatingMenuButton.alpha = 1
+    }, completion: { _ in
+      self.startupOverlay.removeFromSuperview()
+    })
+  }
+
+  private func showOfflineState() {
+    floatingMenuButton.isHidden = true
+    floatingMenuButton.alpha = 0
+
+    loadingTrackView.isHidden = false
+    loadingStatusLabel.isHidden = false
+
+    offlineTitleLabel.isHidden = false
+    offlineHelpButton.isHidden = false
+    offlineSettingsButton.isHidden = false
+    offlineLaunchButton.isHidden = false
+
+    startupLogoButton.isUserInteractionEnabled = true
+
+    startupLogoCenterYConstraint?.isActive = false
+    startupLogoTopConstraint?.isActive = true
+
+    UIView.animate(withDuration: 0.4, animations: {
+      self.loadingTrackView.alpha = 0
+      self.loadingStatusLabel.alpha = 0
+      self.offlineTitleLabel.alpha = 1
+      self.offlineHelpButton.alpha = 1
+      self.offlineSettingsButton.alpha = 1
+      self.offlineLaunchButton.alpha = 1
+      self.startupOverlay.layoutIfNeeded()
+    }, completion: { _ in
+      self.loadingTrackView.isHidden = true
+      self.loadingStatusLabel.isHidden = true
+    })
+  }
+
+  @objc private func offlineLaunchTapped() {
+    presentCourseList()
+  }
+
+  @objc private func offlineHelpTapped() {
+    presentHelp()
+  }
+
+  @objc private func offlineSettingsTapped() {
+    presentSettings()
+  }
+
+  @objc private func showFloatingMenu() {
+    let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+
+    alert.addAction(UIAlertAction(title: "MGPlayer", style: .default, handler: { [weak self] _ in
+      self?.presentCourseList()
+    }))
+
+    alert.addAction(UIAlertAction(title: "Settings", style: .default, handler: { [weak self] _ in
+      self?.presentSettings()
+    }))
+
+    alert.addAction(UIAlertAction(title: "Help", style: .default, handler: { [weak self] _ in
+      self?.presentHelp()
+    }))
+
+    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+
+    if let popover = alert.popoverPresentationController {
+      popover.sourceView = floatingMenuButton
+      popover.sourceRect = floatingMenuButton.bounds
+    }
+
+    present(alert, animated: true)
+  }
+
+  private func presentCourseList() {
+    let courses = ScormUtils.loadAllCourses()
+
+    let vc = ScormCourseListViewController(courses: courses)
+    let nav = UINavigationController(rootViewController: vc)
+    nav.modalPresentationStyle = .formSheet
+    present(nav, animated: true)
+  }
+
+  private func presentSettings() {
+    let vc = SettingsViewController()
+    let nav = UINavigationController(rootViewController: vc)
+    nav.modalPresentationStyle = .formSheet
+    present(nav, animated: true)
+  }
+
+  private func presentHelp() {
+    let vc = HelpViewController()
+    let nav = UINavigationController(rootViewController: vc)
+    nav.modalPresentationStyle = .formSheet
+    present(nav, animated: true)
+  }
+
+  func userContentController(_ userContentController: WKUserContentController,
+                             didReceive message: WKScriptMessage) {
+    guard message.name == "openScorm" else { return }
+
+    if let body = message.body as? [String: Any],
+       let assetId = body["assetId"] as? String {
+      presentScormLessonList(assetId: assetId)
+    } else if let assetId = message.body as? String {
+      presentScormLessonList(assetId: assetId)
+    } else {
+      print("openScorm: invalid message body:", message.body)
+    }
+  }
+
+  private func presentScormLessonList(assetId: String) {
+    do {
+      let course = try ScormUtils.loadCourse(assetId: assetId)
+
+      let vc = ScormLessonListViewController(
+        assetId: course.assetId,
+        scormDir: course.scormDir,
+        manifest: course.manifest
+      )
+
+      let nav = UINavigationController(rootViewController: vc)
+      nav.modalPresentationStyle = .formSheet
+      present(nav, animated: true)
+    } catch {
+      print("SCORM error:", error)
+    }
+  }
+
+  override var prefersStatusBarHidden: Bool { false }
+  override var preferredStatusBarStyle: UIStatusBarStyle { .default }
+
+  func webView(_ webView: WKWebView,
+               createWebViewWith configuration: WKWebViewConfiguration,
+               for navigationAction: WKNavigationAction,
+               windowFeatures: WKWindowFeatures) -> WKWebView? {
+
+    let popupWebView = WKWebView(frame: .zero, configuration: configuration)
+    let popupVC = PopupWebViewController(popupWebView: popupWebView)
+
+    let nav = UINavigationController(rootViewController: popupVC)
+    nav.modalPresentationStyle = .pageSheet
+    present(nav, animated: true)
+
+    if let url = navigationAction.request.url {
+      popupWebView.load(URLRequest(url: url))
+    }
+
+    return popupWebView
+  }
+
+  func webView(_ webView: WKWebView,
+               decidePolicyFor navigationAction: WKNavigationAction,
+               decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+    decisionHandler(.allow)
+  }
+}
+
+final class PopupWebViewController: UIViewController {
+  private let popupWebView: WKWebView
+
+  init(popupWebView: WKWebView) {
+    self.popupWebView = popupWebView
+    super.init(nibName: nil, bundle: nil)
+  }
+
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+
+  override func viewDidLoad() {
+    super.viewDidLoad()
+
+    view.backgroundColor = .systemBackground
+
+    navigationItem.leftBarButtonItem = UIBarButtonItem(
+      barButtonSystemItem: .close,
+      target: self,
+      action: #selector(close)
+    )
+
+    view.addSubview(popupWebView)
+    popupWebView.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      popupWebView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+      popupWebView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+      popupWebView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      popupWebView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+    ])
+  }
+
+  @objc private func close() {
+    dismiss(animated: true)
+  }
+}

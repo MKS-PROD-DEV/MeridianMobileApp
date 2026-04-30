@@ -1,0 +1,13 @@
+{
+	"appId": "com.yourcompany.qawrapper",
+	"appName": "QAWrapper",
+	"webDir": "www",
+	"server": {
+		"url": "https://sandbox7.mksi-lms.net",
+		"cleartext": false
+	},
+	"packageClassList": [
+		"FilesystemPlugin",
+		"PreferencesPlugin"
+	]
+}
