@@ -127,8 +127,6 @@ SCORM content is loaded using:
 scorm://localhost/...
 ```
 
-instead of raw `file://` URLs.
-
 ---
 
 ### `ScormAPIShim.swift`
@@ -169,9 +167,7 @@ SCORM packages are stored and extracted under the app’s Documents directory, t
 Documents/assets/{assetId}/scorm/...
 ```
 
-The app no longer loads SCORM content directly with `file://` URLs.
-
-Instead, the SCORM player uses a custom `WKURLSchemeHandler` to serve files through:
+The SCORM player uses a custom `WKURLSchemeHandler` to serve files through:
 
 ```text
 scorm://localhost/...
