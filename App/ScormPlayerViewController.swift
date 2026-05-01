@@ -1,32 +1,140 @@
 import UIKit
 import WebKit
+import UniformTypeIdentifiers
+
+private final class ScormURLSchemeHandler: NSObject, WKURLSchemeHandler {
+  private let rootDirectoryURL: URL
+
+  init(rootDirectoryURL: URL) {
+    self.rootDirectoryURL = rootDirectoryURL.standardizedFileURL
+    super.init()
+  }
+
+  func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
+    let requestURL = urlSchemeTask.request.url
+
+    guard let requestURL else {
+      urlSchemeTask.didFailWithError(NSError(domain: "ScormScheme", code: 400, userInfo: [
+        NSLocalizedDescriptionKey: "Missing request URL"
+      ]))
+      return
+    }
+
+    do {
+      let fileURL = try resolveFileURL(from: requestURL)
+
+      guard FileManager.default.fileExists(atPath: fileURL.path) else {
+        let response = HTTPURLResponse(
+          url: requestURL,
+          statusCode: 404,
+          httpVersion: "HTTP/1.1",
+          headerFields: ["Content-Type": "text/plain"]
+        )!
+        urlSchemeTask.didReceive(response)
+        urlSchemeTask.didReceive(Data("Not Found".utf8))
+        urlSchemeTask.didFinish()
+        return
+      }
+
+      let data = try Data(contentsOf: fileURL)
+      let mimeType = mimeTypeForFile(at: fileURL) ?? "application/octet-stream"
+
+      let response = URLResponse(
+        url: requestURL,
+        mimeType: mimeType,
+        expectedContentLength: data.count,
+        textEncodingName: textEncodingName(for: mimeType)
+      )
+
+      urlSchemeTask.didReceive(response)
+      urlSchemeTask.didReceive(data)
+      urlSchemeTask.didFinish()
+    } catch {
+      urlSchemeTask.didFailWithError(error)
+    }
+  }
+
+  func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {
+    // No-op
+  }
+
+  private func resolveFileURL(from url: URL) throws -> URL {
+    let relativePath = url.path.removingPercentEncoding ?? url.path
+    let trimmedPath = relativePath.hasPrefix("/") ? String(relativePath.dropFirst()) : relativePath
+
+    let resolvedURL = rootDirectoryURL.appendingPathComponent(trimmedPath).standardizedFileURL
+    let rootPath = rootDirectoryURL.path
+    let resolvedPath = resolvedURL.path
+
+    guard resolvedPath.hasPrefix(rootPath) else {
+      throw NSError(domain: "ScormScheme", code: 403, userInfo: [
+        NSLocalizedDescriptionKey: "Path escapes SCORM root"
+      ])
+    }
+
+    return resolvedURL
+  }
+
+  private func mimeTypeForFile(at fileURL: URL) -> String? {
+    let ext = fileURL.pathExtension
+    guard !ext.isEmpty else { return nil }
+
+    if let type = UTType(filenameExtension: ext),
+       let mimeType = type.preferredMIMEType {
+      return mimeType
+    }
+
+    switch ext.lowercased() {
+    case "js":
+      return "application/javascript"
+    case "css":
+      return "text/css"
+    case "html", "htm":
+      return "text/html"
+    case "xml":
+      return "text/xml"
+    case "json":
+      return "application/json"
+    case "svg":
+      return "image/svg+xml"
+    default:
+      return nil
+    }
+  }
+
+  private func textEncodingName(for mimeType: String) -> String? {
+    if mimeType.hasPrefix("text/") || mimeType == "application/javascript" || mimeType == "application/json" {
+      return "utf-8"
+    }
+    return nil
+  }
+}
 
 final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler, WKUIDelegate, WKNavigationDelegate {
-  private lazy var webView: WKWebView = {
-    let config = WKWebViewConfiguration()
-    config.preferences.javaScriptCanOpenWindowsAutomatically = true
-
-    let ucc = WKUserContentController()
-    let script = WKUserScript(
-      source: injectedJS,
-      injectionTime: .atDocumentStart,
-      forMainFrameOnly: false
-    )
-    ucc.addUserScript(script)
-    config.userContentController = ucc
-
-    let wv = WKWebView(frame: .zero, configuration: config)
-    wv.allowsBackForwardNavigationGestures = true
-    return wv
-  }()
-
   private let injectedJS: String
   private let launchFileURL: URL
   private let readAccessURL: URL
   private let assetId: String
   private let scoId: String
+  private lazy var schemeHandler = ScormURLSchemeHandler(rootDirectoryURL: readAccessURL)
 
-  init(assetId: String, scoId: String, launchFileURL: URL, readAccessURL: URL, injectedJS: String) {
+  private lazy var webView: WKWebView = {
+    let config = makeWebViewConfiguration()
+
+    let wv = WKWebView(frame: .zero, configuration: config)
+    wv.allowsBackForwardNavigationGestures = true
+    wv.uiDelegate = self
+    wv.navigationDelegate = self
+    return wv
+  }()
+
+  init(
+    assetId: String,
+    scoId: String,
+    launchFileURL: URL,
+    readAccessURL: URL,
+    injectedJS: String
+  ) {
     self.assetId = assetId
     self.scoId = scoId
     self.launchFileURL = launchFileURL
@@ -38,6 +146,27 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
 
   required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
+  private func makeWebViewConfiguration() -> WKWebViewConfiguration {
+    let config = WKWebViewConfiguration()
+    config.preferences.javaScriptCanOpenWindowsAutomatically = true
+    config.allowsInlineMediaPlayback = true
+
+    let userContentController = WKUserContentController()
+
+    let injectedScript = WKUserScript(
+      source: injectedJS,
+      injectionTime: .atDocumentStart,
+      forMainFrameOnly: false
+    )
+    userContentController.addUserScript(injectedScript)
+    userContentController.add(self, name: "scormStore")
+
+    config.userContentController = userContentController
+    config.setURLSchemeHandler(schemeHandler, forURLScheme: "scorm")
+
+    return config
+  }
+
   override func viewDidLoad() {
     super.viewDidLoad()
     view.backgroundColor = .systemBackground
@@ -48,10 +177,6 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
       action: #selector(close)
     )
 
-    webView.uiDelegate = self
-    webView.navigationDelegate = self
-    webView.configuration.userContentController.add(self, name: "scormStore")
-
     view.addSubview(webView)
     webView.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
@@ -61,37 +186,106 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
       webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
     ])
 
-    webView.loadFileURL(launchFileURL, allowingReadAccessTo: readAccessURL)
+    loadScormContent()
+  }
+
+  private func loadScormContent() {
+    if let scormURL = customSchemeURL(for: launchFileURL) {
+      print("Loading SCORM via custom scheme URL: \(scormURL.absoluteString)")
+      webView.load(URLRequest(url: scormURL))
+    } else {
+      print("Falling back to loadFileURL for: \(launchFileURL.path)")
+      webView.loadFileURL(launchFileURL, allowingReadAccessTo: readAccessURL)
+    }
+  }
+
+  private func customSchemeURL(for fileURL: URL) -> URL? {
+    let standardizedLaunchURL = fileURL.standardizedFileURL
+    let standardizedRootURL = readAccessURL.standardizedFileURL
+
+    let rootPath = standardizedRootURL.path
+    let filePath = standardizedLaunchURL.path
+
+    guard filePath.hasPrefix(rootPath) else { return nil }
+
+    var relativePath = String(filePath.dropFirst(rootPath.count))
+    if relativePath.hasPrefix("/") {
+      relativePath.removeFirst()
+    }
+
+    let encodedPath = relativePath
+      .split(separator: "/", omittingEmptySubsequences: false)
+      .map { segment in
+        String(segment).addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? String(segment)
+      }
+      .joined(separator: "/")
+
+    return URL(string: "scorm://localhost/\(encodedPath)")
   }
 
   @objc private func close() { dismiss(animated: true) }
 
   func webView(_ webView: WKWebView,
+               didStartProvisionalNavigation navigation: WKNavigation!) {
+    print("SCORM didStartProvisionalNavigation:", webView.url?.absoluteString ?? "nil")
+  }
+
+  func webView(_ webView: WKWebView,
+               didCommit navigation: WKNavigation!) {
+    print("SCORM didCommit:", webView.url?.absoluteString ?? "nil")
+  }
+
+  func webView(_ webView: WKWebView,
+               didFinish navigation: WKNavigation!) {
+    print("SCORM didFinish:", webView.url?.absoluteString ?? "nil")
+  }
+
+  func webView(_ webView: WKWebView,
+               didFail navigation: WKNavigation!,
+               withError error: Error) {
+    print("SCORM didFail:", error.localizedDescription)
+  }
+
+  func webView(_ webView: WKWebView,
+               didFailProvisionalNavigation navigation: WKNavigation!,
+               withError error: Error) {
+    print("SCORM didFailProvisionalNavigation:", error.localizedDescription)
+    print("SCORM failed URL:", webView.url?.absoluteString ?? "nil")
+  }
+
+  func webView(_ webView: WKWebView,
+               decidePolicyFor navigationAction: WKNavigationAction,
+               decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+    print("SCORM navigationAction:", navigationAction.request.url?.absoluteString ?? "nil")
+    decisionHandler(.allow)
+  }
+
+  func webView(_ webView: WKWebView,
                createWebViewWith configuration: WKWebViewConfiguration,
                for navigationAction: WKNavigationAction,
                windowFeatures: WKWindowFeatures) -> WKWebView? {
-    let popupWebView = WKWebView(frame: .zero, configuration: configuration)
-    let popupVC = PopupWebViewController(popupWebView: popupWebView)
+    let popupConfig = makeWebViewConfiguration()
+    let popupWebView = WKWebView(frame: .zero, configuration: popupConfig)
+    popupWebView.navigationDelegate = self
+    popupWebView.uiDelegate = self
 
+    let popupVC = PopupWebViewController(popupWebView: popupWebView)
     let nav = UINavigationController(rootViewController: popupVC)
     nav.modalPresentationStyle = .pageSheet
     present(nav, animated: true)
 
     if let url = navigationAction.request.url {
+      print("SCORM popup URL:", url.absoluteString)
       popupWebView.load(URLRequest(url: url))
     }
 
     return popupWebView
   }
 
-  func webView(_ webView: WKWebView,
-               decidePolicyFor navigationAction: WKNavigationAction,
-               decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-    decisionHandler(.allow)
-  }
-
   func userContentController(_ userContentController: WKUserContentController,
                              didReceive message: WKScriptMessage) {
+    print("SCORM script message:", message.name)
+
     guard message.name == "scormStore" else { return }
     guard let body = message.body as? [String: Any],
           let op = body["op"] as? String else { return }

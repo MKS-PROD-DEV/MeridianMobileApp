@@ -500,35 +500,35 @@ final class MyViewController: CAPBridgeViewController,
     })
   }
 
-  private func embedOfflineCourseListIfNeeded() {
-    guard embeddedOfflineCourseListNavController == nil else { return }
+    private func embedOfflineCourseListIfNeeded() {
+      guard embeddedOfflineCourseListNavController == nil else { return }
 
-    let courses = ScormUtils.loadAllCourses()
-    let courseListVC = ScormCourseListViewController(courses: courses)
-    let nav = UINavigationController(rootViewController: courseListVC)
-    nav.setNavigationBarHidden(true, animated: false)
+      let courses = ScormUtils.loadAllCourses()
+      let courseListVC = ScormCourseListViewController(courses: courses)
+      let nav = UINavigationController(rootViewController: courseListVC)
+      nav.setNavigationBarHidden(true, animated: false)
 
-    addChild(nav)
-    offlineCoursesContainerView.addSubview(nav.view)
-    nav.view.translatesAutoresizingMaskIntoConstraints = false
+      addChild(nav)
+      offlineCoursesContainerView.addSubview(nav.view)
+      nav.view.translatesAutoresizingMaskIntoConstraints = false
 
-    NSLayoutConstraint.activate([
-      nav.view.topAnchor.constraint(equalTo: offlineCoursesContainerView.topAnchor),
-      nav.view.bottomAnchor.constraint(equalTo: offlineCoursesContainerView.bottomAnchor),
-      nav.view.leadingAnchor.constraint(equalTo: offlineCoursesContainerView.leadingAnchor),
-      nav.view.trailingAnchor.constraint(equalTo: offlineCoursesContainerView.trailingAnchor)
-    ])
+      NSLayoutConstraint.activate([
+        nav.view.topAnchor.constraint(equalTo: offlineCoursesContainerView.topAnchor),
+        nav.view.bottomAnchor.constraint(equalTo: offlineCoursesContainerView.bottomAnchor),
+        nav.view.leadingAnchor.constraint(equalTo: offlineCoursesContainerView.leadingAnchor),
+        nav.view.trailingAnchor.constraint(equalTo: offlineCoursesContainerView.trailingAnchor)
+      ])
 
-    nav.didMove(toParent: self)
-    embeddedOfflineCourseListNavController = nav
-  }
+      nav.didMove(toParent: self)
+      embeddedOfflineCourseListNavController = nav
+    }
 
-  private func refreshOfflineCourseList() {
-    let courses = ScormUtils.loadAllCourses()
-    let courseListVC = ScormCourseListViewController(courses: courses)
-    embeddedOfflineCourseListNavController?.setViewControllers([courseListVC], animated: false)
-    embeddedOfflineCourseListNavController?.setNavigationBarHidden(true, animated: false)
-  }
+    private func refreshOfflineCourseList() {
+      let courses = ScormUtils.loadAllCourses()
+      let courseListVC = ScormCourseListViewController(courses: courses)
+      embeddedOfflineCourseListNavController?.setViewControllers([courseListVC], animated: false)
+      embeddedOfflineCourseListNavController?.setNavigationBarHidden(true, animated: false)
+    }
 
   private func presentLostInternetAlert() {
     guard !isShowingConnectivityAlert else { return }
@@ -651,14 +651,13 @@ final class MyViewController: CAPBridgeViewController,
     present(alert, animated: true)
   }
 
-  private func presentCourseList() {
-    let courses = ScormUtils.loadAllCourses()
-
-    let vc = ScormCourseListViewController(courses: courses)
-    let nav = UINavigationController(rootViewController: vc)
-    nav.modalPresentationStyle = .formSheet
-    present(nav, animated: true)
-  }
+    private func presentCourseList() {
+      let courses = ScormUtils.loadAllCourses()
+      let vc = ScormCourseListViewController(courses: courses)
+      let nav = UINavigationController(rootViewController: vc)
+      nav.modalPresentationStyle = .formSheet
+      present(nav, animated: true)
+    }
 
   private func presentSettings() {
     let vc = SettingsViewController()
@@ -688,23 +687,23 @@ final class MyViewController: CAPBridgeViewController,
     }
   }
 
-  private func presentScormLessonList(assetId: String) {
-    do {
-      let course = try ScormUtils.loadCourse(assetId: assetId)
+    private func presentScormLessonList(assetId: String) {
+      do {
+        let course = try ScormUtils.loadCourse(assetId: assetId)
 
-      let vc = ScormLessonListViewController(
-        assetId: course.assetId,
-        scormDir: course.scormDir,
-        manifest: course.manifest
-      )
+        let vc = ScormLessonListViewController(
+          assetId: course.assetId,
+          scormDir: course.scormDir,
+          manifest: course.manifest
+        )
 
-      let nav = UINavigationController(rootViewController: vc)
-      nav.modalPresentationStyle = .formSheet
-      present(nav, animated: true)
-    } catch {
-      print("SCORM error:", error)
+        let nav = UINavigationController(rootViewController: vc)
+        nav.modalPresentationStyle = .formSheet
+        present(nav, animated: true)
+      } catch {
+        print("SCORM error:", error)
+      }
     }
-  }
 
   override var prefersStatusBarHidden: Bool { false }
   override var preferredStatusBarStyle: UIStatusBarStyle { .default }

@@ -3,7 +3,8 @@
   "appName": "QAWrapper",
   "webDir": "www",
   "server": {
-    "cleartext": false
+    "cleartext": false,
+    "iosScheme": "http"
   },
   "packageClassList": [
     "FilesystemPlugin",
