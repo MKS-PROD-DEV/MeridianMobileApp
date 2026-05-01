@@ -63,6 +63,7 @@ final class MyViewController: CAPBridgeViewController,
   private var isShowingConnectivityAlert = false
   private var embeddedOfflineCourseListNavController: UINavigationController?
   private var didShowInitialWebContent = false
+  private var isAuthenticatingOfflineMode = false
 
   private let floatingMenuButton: UIButton = {
     let button = UIButton(type: .custom)
@@ -394,9 +395,32 @@ final class MyViewController: CAPBridgeViewController,
     if initialOnlineState {
       showOnlineState(reloadWebView: false)
     } else {
-      showOfflineState()
+      requestOfflineModeAccess()
     }
   }
+
+    private func requestOfflineModeAccess(afterSuccess: (() -> Void)? = nil) {
+      if !AppConfiguration.isOfflineModeAuthenticationEnabled {
+        showOfflineState()
+        afterSuccess?()
+        return
+      }
+
+      guard !isAuthenticatingOfflineMode else { return }
+      isAuthenticatingOfflineMode = true
+
+      runBiometricAuth { [weak self] success in
+        guard let self = self else { return }
+        self.isAuthenticatingOfflineMode = false
+
+        if success {
+          self.showOfflineState()
+          afterSuccess?()
+        } else {
+          self.showLockFailure()
+        }
+      }
+    }
 
   private func showOnlineState(reloadWebView: Bool = true) {
     isShowingOfflineMode = false
@@ -408,13 +432,13 @@ final class MyViewController: CAPBridgeViewController,
       webView.isHidden = false
       view.sendSubviewToBack(webView)
 
-        if reloadWebView {
-          if webView.url != nil || didShowInitialWebContent {
-            webView.reload()
-          } else if let url = URL(string: "capacitor://localhost") {
-            webView.load(URLRequest(url: url))
-          }
+      if reloadWebView {
+        if webView.url != nil || didShowInitialWebContent {
+          webView.reload()
+        } else if let url = URL(string: "capacitor://localhost") {
+          webView.load(URLRequest(url: url))
         }
+      }
 
       didShowInitialWebContent = true
     }
@@ -529,7 +553,7 @@ final class MyViewController: CAPBridgeViewController,
       guard let self = self else { return }
       self.isShowingConnectivityAlert = false
       self.dismissPresentedContentIfNeeded {
-        self.showOfflineState()
+        self.requestOfflineModeAccess()
       }
     }))
 
@@ -550,6 +574,33 @@ final class MyViewController: CAPBridgeViewController,
       completion()
     }
   }
+
+  private func runBiometricAuth(completion: @escaping (Bool) -> Void) {
+    authenticateUser { result in
+      switch result {
+      case .success:
+        completion(true)
+      case .failure:
+        completion(false)
+      }
+    }
+  }
+
+    private func showLockFailure() {
+      let alert = UIAlertController(
+        title: "Authentication Required",
+        message: "You need authentication to enter Offline Mode.",
+        preferredStyle: .alert
+      )
+
+      alert.addAction(UIAlertAction(title: "Try Again", style: .default, handler: { [weak self] _ in
+        self?.requestOfflineModeAccess()
+      }))
+
+      alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+
+      present(alert, animated: true)
+    }
 
   @objc private func offlineLogoTapped() {
     refreshOfflineCourseList()
@@ -583,7 +634,7 @@ final class MyViewController: CAPBridgeViewController,
     let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
 
     alert.addAction(UIAlertAction(title: "Offline Mode", style: .default, handler: { [weak self] _ in
-      self?.showOfflineState()
+      self?.requestOfflineModeAccess()
     }))
 
     alert.addAction(UIAlertAction(title: "Settings", style: .default, handler: { [weak self] _ in
