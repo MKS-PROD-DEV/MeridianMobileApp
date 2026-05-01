@@ -65,6 +65,7 @@ final class MyViewController: CAPBridgeViewController,
   private var didShowInitialWebContent = false
   private var isAuthenticatingOfflineMode = false
   private var hasPresentedInitialSiteSelection = false
+  private var isWaitingForInitialSiteLoad = false
     
   private let floatingMenuButton: UIButton = {
     let button = UIButton(type: .custom)
@@ -427,31 +428,33 @@ final class MyViewController: CAPBridgeViewController,
       }
     }
 
-  private func showOnlineState(reloadWebView: Bool = true) {
-    isShowingOfflineMode = false
-    isShowingConnectivityAlert = false
-    startupLogoButton.isUserInteractionEnabled = false
-    floatingMenuButton.isHidden = false
+    private func showOnlineState(reloadWebView: Bool = true) {
+      isShowingOfflineMode = false
+      isShowingConnectivityAlert = false
+      startupLogoButton.isUserInteractionEnabled = false
+      floatingMenuButton.isHidden = false
 
-    if let webView = self.webView {
-      webView.isHidden = false
-      view.sendSubviewToBack(webView)
+      if let webView = self.webView {
+        webView.isHidden = false
+        view.sendSubviewToBack(webView)
 
         if reloadWebView {
+          isWaitingForInitialSiteLoad = true
+          loadingStatusLabel.text = "Preparing site..."
+          loadingTrackView.isHidden = false
+          loadingStatusLabel.isHidden = false
+          loadingTrackView.alpha = 1
+          loadingStatusLabel.alpha = 1
+          startupOverlay.alpha = 1
+          view.bringSubviewToFront(startupOverlay)
+
           webView.load(URLRequest(url: AppConfiguration.launchURL))
+        } else {
+          didShowInitialWebContent = true
+          completeStartupOverlayDismissalIfNeeded()
         }
-
-      didShowInitialWebContent = true
+      }
     }
-
-    UIView.animate(withDuration: 0.3, animations: {
-      self.startupOverlay.alpha = 0
-      self.floatingMenuButton.alpha = 1
-    }, completion: { _ in
-      self.startupOverlay.removeFromSuperview()
-    })
-  }
-
   private func showOfflineState() {
     isShowingOfflineMode = true
 
@@ -535,6 +538,17 @@ final class MyViewController: CAPBridgeViewController,
       embeddedOfflineCourseListNavController?.setNavigationBarHidden(false, animated: false)
     }
 
+    private func completeStartupOverlayDismissalIfNeeded() {
+      guard startupOverlay.superview != nil else { return }
+
+      UIView.animate(withDuration: 0.3, animations: {
+        self.startupOverlay.alpha = 0
+        self.floatingMenuButton.alpha = 1
+      }, completion: { _ in
+        self.startupOverlay.removeFromSuperview()
+      })
+    }
+    
   private func presentLostInternetAlert() {
     guard !isShowingConnectivityAlert else { return }
 
@@ -780,7 +794,35 @@ final class MyViewController: CAPBridgeViewController,
 
     return popupWebView
   }
+    
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+      guard webView == self.webView else { return }
 
+      if isWaitingForInitialSiteLoad {
+        isWaitingForInitialSiteLoad = false
+        didShowInitialWebContent = true
+        completeStartupOverlayDismissalIfNeeded()
+      }
+    }
+    
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+      guard webView == self.webView else { return }
+
+      if isWaitingForInitialSiteLoad {
+        isWaitingForInitialSiteLoad = false
+        completeStartupOverlayDismissalIfNeeded()
+      }
+    }
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+      guard webView == self.webView else { return }
+
+      if isWaitingForInitialSiteLoad {
+        isWaitingForInitialSiteLoad = false
+        completeStartupOverlayDismissalIfNeeded()
+      }
+    }
+    
   func webView(_ webView: WKWebView,
                decidePolicyFor navigationAction: WKNavigationAction,
                decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
