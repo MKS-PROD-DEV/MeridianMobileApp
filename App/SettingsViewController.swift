@@ -7,7 +7,13 @@ final class SettingsViewController: UITableViewController {
     case support
   }
 
+  private enum PreferencesRow: Int, CaseIterable {
+    case site
+    case notifications
+  }
+
   private let notificationsKey = "settings.notifications.enabled"
+  private let onBrandingChanged: ((Branding) -> Void)?
 
   private lazy var notificationsSwitch: UISwitch = {
     let control = UISwitch()
@@ -16,7 +22,8 @@ final class SettingsViewController: UITableViewController {
     return control
   }()
 
-  init() {
+  init(onBrandingChanged: ((Branding) -> Void)? = nil) {
+    self.onBrandingChanged = onBrandingChanged
     super.init(style: .insetGrouped)
     self.title = "Settings"
   }
@@ -53,7 +60,7 @@ final class SettingsViewController: UITableViewController {
     guard let section = Section(rawValue: section) else { return 0 }
 
     switch section {
-    case .preferences: return 1
+    case .preferences: return PreferencesRow.allCases.count
     case .storage: return 1
     case .support: return 1
     }
@@ -83,10 +90,23 @@ final class SettingsViewController: UITableViewController {
 
     switch section {
     case .preferences:
-      content.text = "Notifications"
-      cell.contentConfiguration = content
-      cell.accessoryView = notificationsSwitch
-      cell.selectionStyle = .none
+      guard let row = PreferencesRow(rawValue: indexPath.row) else {
+        return cell
+      }
+
+      switch row {
+      case .site:
+        content.text = "Organization Selection"
+        content.secondaryText = "\(AppConfiguration.branding.displayName) • \(AppConfiguration.branding.hostDisplayName)"
+        cell.contentConfiguration = content
+        cell.accessoryType = .disclosureIndicator
+
+      case .notifications:
+        content.text = "Notifications"
+        cell.contentConfiguration = content
+        cell.accessoryView = notificationsSwitch
+        cell.selectionStyle = .none
+      }
 
     case .storage:
       content.text = "Clear All Downloaded Content"
@@ -109,7 +129,14 @@ final class SettingsViewController: UITableViewController {
 
     switch section {
     case .preferences:
-      break
+      guard let row = PreferencesRow(rawValue: indexPath.row) else { return }
+
+      switch row {
+      case .site:
+        showSitePicker()
+      case .notifications:
+        break
+      }
 
     case .storage:
       confirmClearAllDownloadedContent()
@@ -117,6 +144,50 @@ final class SettingsViewController: UITableViewController {
     case .support:
       showReportBugPlaceholder()
     }
+  }
+
+  private func showSitePicker() {
+    let alert = UIAlertController(
+      title: "Select Site",
+      message: nil,
+      preferredStyle: .actionSheet
+    )
+
+    for branding in Branding.allCases {
+      let isCurrent = branding == AppConfiguration.branding
+      let titleBase = "\(branding.displayName) — \(branding.hostDisplayName)"
+      let title = isCurrent ? "✓ \(titleBase)" : titleBase
+
+      alert.addAction(UIAlertAction(title: title, style: .default, handler: { [weak self] _ in
+        self?.applyBranding(branding)
+      }))
+    }
+
+    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+
+    if let popover = alert.popoverPresentationController,
+       let selectedRow = tableView.indexPathForSelectedRow,
+       let cell = tableView.cellForRow(at: selectedRow) {
+      popover.sourceView = cell
+      popover.sourceRect = cell.bounds
+    }
+
+    present(alert, animated: true)
+  }
+
+  private func applyBranding(_ branding: Branding) {
+    AppConfiguration.branding = branding
+    tableView.reloadData()
+    onBrandingChanged?(branding)
+
+    let alert = UIAlertController(
+      title: "App Updated",
+      message: "Please restart app to configure settings for: \(branding.displayName)",
+      preferredStyle: .alert
+    )
+
+    alert.addAction(UIAlertAction(title: "OK", style: .default))
+    present(alert, animated: true)
   }
 
   private func confirmClearAllDownloadedContent() {

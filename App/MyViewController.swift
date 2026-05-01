@@ -64,7 +64,8 @@ final class MyViewController: CAPBridgeViewController,
   private var embeddedOfflineCourseListNavController: UINavigationController?
   private var didShowInitialWebContent = false
   private var isAuthenticatingOfflineMode = false
-
+  private var hasPresentedInitialSiteSelection = false
+    
   private let floatingMenuButton: UIButton = {
     let button = UIButton(type: .custom)
     button.translatesAutoresizingMaskIntoConstraints = false
@@ -199,7 +200,11 @@ final class MyViewController: CAPBridgeViewController,
   private var loadingFillWidthConstraint: NSLayoutConstraint?
   private var startupLogoCenterYConstraint: NSLayoutConstraint?
   private var startupLogoTopConstraint: NSLayoutConstraint?
-
+    
+  override func viewDidAppear(_ animated: Bool) {
+      super.viewDidAppear(animated)
+    presentInitialSiteSelectionIfNeeded()
+  }
   override func viewDidLoad() {
     super.viewDidLoad()
 
@@ -560,6 +565,53 @@ final class MyViewController: CAPBridgeViewController,
     present(alert, animated: true)
   }
 
+    private func presentInitialSiteSelectionIfNeeded() {
+      print("hasSelectedBranding:", AppConfiguration.hasSelectedBranding)
+
+      guard !AppConfiguration.hasSelectedBranding else { return }
+      guard !hasPresentedInitialSiteSelection else { return }
+      guard presentedViewController == nil else { return }
+
+      hasPresentedInitialSiteSelection = true
+
+      let vc = InitialSiteSelectionViewController { [weak self] branding in
+        AppConfiguration.branding = branding
+        self?.dismiss(animated: true) {
+          self?.handleBrandingSelectionApplied()
+        }
+      }
+
+      present(vc, animated: true)
+    }
+
+    private func handleBrandingSelectionApplied() {
+      if let webView = self.webView {
+        webView.load(URLRequest(url: AppConfiguration.launchURL))
+      }
+
+      floatingMenuButton.backgroundColor = .systemBackground
+
+      if let icon = AppTheme.logoImage {
+        floatingMenuButton.setImage(icon, for: .normal)
+        floatingMenuButton.setTitle(nil, for: .normal)
+      } else {
+        floatingMenuButton.setImage(nil, for: .normal)
+        floatingMenuButton.setTitle(AppTheme.shortText, for: .normal)
+      }
+
+      startupLogoButton.backgroundColor = .clear
+      if let icon = AppTheme.logoImage {
+        startupLogoButton.setImage(icon, for: .normal)
+        startupLogoButton.setTitle(nil, for: .normal)
+      } else {
+        startupLogoButton.setImage(nil, for: .normal)
+        startupLogoButton.setTitle(AppTheme.shortText, for: .normal)
+        startupLogoButton.setTitleColor(.black, for: .normal)
+      }
+
+      loadingFillView.backgroundColor = AppTheme.primaryColor
+    }
+    
   private func dismissPresentedContentIfNeeded(completion: @escaping () -> Void) {
     if let presented = presentedViewController,
        !(presented is UIAlertController) {
@@ -659,12 +711,14 @@ final class MyViewController: CAPBridgeViewController,
       present(nav, animated: true)
     }
 
-  private func presentSettings() {
-    let vc = SettingsViewController()
-    let nav = UINavigationController(rootViewController: vc)
-    nav.modalPresentationStyle = .formSheet
-    present(nav, animated: true)
-  }
+    private func presentSettings() {
+      let vc = SettingsViewController { [weak self] _ in
+        self?.handleBrandingSelectionApplied()
+      }
+      let nav = UINavigationController(rootViewController: vc)
+      nav.modalPresentationStyle = .formSheet
+      present(nav, animated: true)
+    }
 
   private func presentHelp() {
     let vc = HelpViewController()
