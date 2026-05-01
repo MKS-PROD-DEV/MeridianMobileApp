@@ -76,14 +76,14 @@ final class MyViewController: CAPBridgeViewController,
     button.layer.shadowRadius = 8
     button.layer.shadowOffset = CGSize(width: 0, height: 4)
 
-    if let icon = UIImage(named: "MGLogo") {
-      button.setImage(icon, for: .normal)
-      button.imageView?.contentMode = .scaleAspectFit
-    } else {
-      button.setTitle("MG", for: .normal)
-      button.setTitleColor(.label, for: .normal)
-      button.titleLabel?.font = .boldSystemFont(ofSize: 16)
-    }
+      if let icon = AppTheme.logoImage {
+        button.setImage(icon, for: .normal)
+        button.imageView?.contentMode = .scaleAspectFit
+      } else {
+        button.setTitle(AppTheme.shortText, for: .normal)
+        button.setTitleColor(.label, for: .normal)
+        button.titleLabel?.font = .boldSystemFont(ofSize: 16)
+      }
 
     button.alpha = 0
     button.isHidden = true
@@ -105,14 +105,14 @@ final class MyViewController: CAPBridgeViewController,
     let button = UIButton(type: .custom)
     button.translatesAutoresizingMaskIntoConstraints = false
 
-    if let icon = UIImage(named: "MGLogo") {
-      button.setImage(icon, for: .normal)
-      button.imageView?.contentMode = .scaleAspectFit
-    } else {
-      button.setTitle("MG", for: .normal)
-      button.setTitleColor(.black, for: .normal)
-      button.titleLabel?.font = .boldSystemFont(ofSize: 36)
-    }
+      if let icon = AppTheme.logoImage {
+        button.setImage(icon, for: .normal)
+        button.imageView?.contentMode = .scaleAspectFit
+      } else {
+        button.setTitle(AppTheme.shortText, for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.titleLabel?.font = .boldSystemFont(ofSize: 36)
+      }
 
     return button
   }()
@@ -129,7 +129,7 @@ final class MyViewController: CAPBridgeViewController,
   private let loadingFillView: UIView = {
     let view = UIView()
     view.translatesAutoresizingMaskIntoConstraints = false
-    view.backgroundColor = UIColor(red: 0/255, green: 131/255, blue: 203/255, alpha: 1.0)
+    view.backgroundColor = AppTheme.primaryColor
     view.layer.cornerRadius = 4
     view.clipsToBounds = true
     return view
@@ -393,7 +393,7 @@ final class MyViewController: CAPBridgeViewController,
     guard startupSequenceCompleted, let initialOnlineState = pendingInitialOnlineState else { return }
 
     if initialOnlineState {
-      showOnlineState(reloadWebView: false)
+      showOnlineState(reloadWebView: true)
     } else {
       requestOfflineModeAccess()
     }
@@ -432,13 +432,9 @@ final class MyViewController: CAPBridgeViewController,
       webView.isHidden = false
       view.sendSubviewToBack(webView)
 
-      if reloadWebView {
-        if webView.url != nil || didShowInitialWebContent {
-          webView.reload()
-        } else if let url = URL(string: "capacitor://localhost") {
-          webView.load(URLRequest(url: url))
+        if reloadWebView {
+          webView.load(URLRequest(url: AppConfiguration.launchURL))
         }
-      }
 
       didShowInitialWebContent = true
     }

@@ -17,6 +17,7 @@
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		C5102DA32FA4187F003F63AC /* Authenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5102DA22FA41878003F63AC /* Authenticator.swift */; };
 		C5102DA52FA4E391003F63AC /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5102DA42FA4E38E003F63AC /* AppConfiguration.swift */; };
+		C5102DA72FA4E8BB003F63AC /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5102DA62FA4E8B8003F63AC /* AppTheme.swift */; };
 		C5EE1A1E2FA23F9C00D7DBBF /* MyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5EE1A1D2FA23F9C00D7DBBF /* MyViewController.swift */; };
 		C5EE1A202FA27D1800D7DBBF /* nativeAssetStore.js in Resources */ = {isa = PBXBuildFile; fileRef = C5EE1A1F2FA27D1800D7DBBF /* nativeAssetStore.js */; };
 		C5EE1A232FA2A3AA00D7DBBF /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = C5EE1A222FA2A3AA00D7DBBF /* ZIPFoundation */; };
@@ -43,6 +44,7 @@
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		C5102DA22FA41878003F63AC /* Authenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Authenticator.swift; sourceTree = "<group>"; };
 		C5102DA42FA4E38E003F63AC /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
+		C5102DA62FA4E8B8003F63AC /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		C5EE1A1D2FA23F9C00D7DBBF /* MyViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyViewController.swift; sourceTree = "<group>"; };
 		C5EE1A1F2FA27D1800D7DBBF /* nativeAssetStore.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = nativeAssetStore.js; sourceTree = "<group>"; };
 		C5EE1A242FA2A3C100D7DBBF /* ScormPlayerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScormPlayerViewController.swift; sourceTree = "<group>"; };
@@ -88,6 +90,7 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				C5102DA62FA4E8B8003F63AC /* AppTheme.swift */,
 				C5102DA42FA4E38E003F63AC /* AppConfiguration.swift */,
 				C5102DA22FA41878003F63AC /* Authenticator.swift */,
 				C5EE1A322FA3854500D7DBBF /* ScormProgressStore.swift */,
@@ -200,6 +203,7 @@
 				C5EE1A272FA2A3EF00D7DBBF /* ScormUtils.swift in Sources */,
 				C5102DA32FA4187F003F63AC /* Authenticator.swift in Sources */,
 				C5EE1A252FA2A3C900D7DBBF /* ScormPlayerViewController.swift in Sources */,
+				C5102DA72FA4E8BB003F63AC /* AppTheme.swift in Sources */,
 				C5EE1A1E2FA23F9C00D7DBBF /* MyViewController.swift in Sources */,
 				C5EE1A2D2FA2C81500D7DBBF /* ScormCourseListViewController.swift in Sources */,
 				C5EE1A312FA2CE0F00D7DBBF /* HelpViewController.swift in Sources */,
