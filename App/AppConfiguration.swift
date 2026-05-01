@@ -6,7 +6,7 @@ enum Branding {
 }
 
 enum AppConfiguration {
-  static let branding: Branding = .psi
+  static let branding: Branding = .mg
   static let isOfflineModeAuthenticationEnabled = false
 
   static var launchURL: URL {
