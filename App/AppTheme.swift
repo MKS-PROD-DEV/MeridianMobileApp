@@ -4,7 +4,7 @@ enum AppTheme {
   static var primaryColor: UIColor {
     switch AppConfiguration.branding {
     case .mg:
-      return UIColor(red: 0/255, green: 131/255, blue: 203/255, alpha: 1.0)
+      return UIColor(red: 0 / 255, green: 131 / 255, blue: 203 / 255, alpha: 1.0)
     case .psi:
       return UIColor.systemGreen
     case .adc:

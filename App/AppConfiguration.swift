@@ -65,7 +65,8 @@ enum AppConfiguration {
   static var branding: Branding {
     get {
       guard let rawValue = UserDefaults.standard.string(forKey: brandingKey),
-            let branding = Branding(rawValue: rawValue) else {
+        let branding = Branding(rawValue: rawValue)
+      else {
         return .mg
       }
       return branding

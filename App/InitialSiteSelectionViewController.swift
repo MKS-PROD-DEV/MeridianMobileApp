@@ -1,6 +1,8 @@
 import UIKit
 
-final class InitialSiteSelectionViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+final class InitialSiteSelectionViewController: UIViewController, UITableViewDataSource,
+  UITableViewDelegate
+{
   private let onConfirm: (Branding) -> Void
   private var selectedBranding: Branding?
 
@@ -98,8 +100,9 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
       confirmButton.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 16),
       confirmButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
       confirmButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-      confirmButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-      confirmButton.heightAnchor.constraint(equalToConstant: 50)
+      confirmButton.bottomAnchor.constraint(
+        equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+      confirmButton.heightAnchor.constraint(equalToConstant: 50),
     ])
   }
 
@@ -112,19 +115,19 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
     Branding.allCases.count
   }
 
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-      let branding = Branding.allCases[indexPath.row]
-      let cell = tableView.dequeueReusableCell(withIdentifier: "BrandingCell", for: indexPath)
+  func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    let branding = Branding.allCases[indexPath.row]
+    let cell = tableView.dequeueReusableCell(withIdentifier: "BrandingCell", for: indexPath)
 
-      var content = cell.defaultContentConfiguration()
-      content.text = branding.displayName
-      content.secondaryText = "\(branding.fullName) • \(branding.hostDisplayName)"
+    var content = cell.defaultContentConfiguration()
+    content.text = branding.displayName
+    content.secondaryText = "\(branding.fullName) • \(branding.hostDisplayName)"
 
-      cell.contentConfiguration = content
-      cell.accessoryType = (branding == selectedBranding) ? .checkmark : .none
+    cell.contentConfiguration = content
+    cell.accessoryType = (branding == selectedBranding) ? .checkmark : .none
 
-      return cell
-    }
+    return cell
+  }
 
   func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
     selectedBranding = Branding.allCases[indexPath.row]

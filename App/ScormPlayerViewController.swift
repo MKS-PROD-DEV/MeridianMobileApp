@@ -1,6 +1,6 @@
 import UIKit
-import WebKit
 import UniformTypeIdentifiers
+import WebKit
 
 private final class ScormURLSchemeHandler: NSObject, WKURLSchemeHandler {
   private let rootDirectoryURL: URL
@@ -14,9 +14,12 @@ private final class ScormURLSchemeHandler: NSObject, WKURLSchemeHandler {
     let requestURL = urlSchemeTask.request.url
 
     guard let requestURL else {
-      urlSchemeTask.didFailWithError(NSError(domain: "ScormScheme", code: 400, userInfo: [
-        NSLocalizedDescriptionKey: "Missing request URL"
-      ]))
+      urlSchemeTask.didFailWithError(
+        NSError(
+          domain: "ScormScheme", code: 400,
+          userInfo: [
+            NSLocalizedDescriptionKey: "Missing request URL"
+          ]))
       return
     }
 
@@ -67,9 +70,11 @@ private final class ScormURLSchemeHandler: NSObject, WKURLSchemeHandler {
     let resolvedPath = resolvedURL.path
 
     guard resolvedPath.hasPrefix(rootPath) else {
-      throw NSError(domain: "ScormScheme", code: 403, userInfo: [
-        NSLocalizedDescriptionKey: "Path escapes SCORM root"
-      ])
+      throw NSError(
+        domain: "ScormScheme", code: 403,
+        userInfo: [
+          NSLocalizedDescriptionKey: "Path escapes SCORM root"
+        ])
     }
 
     return resolvedURL
@@ -80,7 +85,8 @@ private final class ScormURLSchemeHandler: NSObject, WKURLSchemeHandler {
     guard !ext.isEmpty else { return nil }
 
     if let type = UTType(filenameExtension: ext),
-       let mimeType = type.preferredMIMEType {
+      let mimeType = type.preferredMIMEType
+    {
       return mimeType
     }
 
@@ -103,14 +109,18 @@ private final class ScormURLSchemeHandler: NSObject, WKURLSchemeHandler {
   }
 
   private func textEncodingName(for mimeType: String) -> String? {
-    if mimeType.hasPrefix("text/") || mimeType == "application/javascript" || mimeType == "application/json" {
+    if mimeType.hasPrefix("text/") || mimeType == "application/javascript"
+      || mimeType == "application/json"
+    {
       return "utf-8"
     }
     return nil
   }
 }
 
-final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler, WKUIDelegate, WKNavigationDelegate {
+final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler, WKUIDelegate,
+  WKNavigationDelegate
+{
   private let injectedJS: String
   private let launchFileURL: URL
   private let readAccessURL: URL
@@ -213,10 +223,12 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
       relativePath.removeFirst()
     }
 
-    let encodedPath = relativePath
+    let encodedPath =
+      relativePath
       .split(separator: "/", omittingEmptySubsequences: false)
       .map { segment in
-        String(segment).addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? String(segment)
+        String(segment).addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
+          ?? String(segment)
       }
       .joined(separator: "/")
 
@@ -225,45 +237,59 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
 
   @objc private func close() { dismiss(animated: true) }
 
-  func webView(_ webView: WKWebView,
-               didStartProvisionalNavigation navigation: WKNavigation!) {
+  func webView(
+    _ webView: WKWebView,
+    didStartProvisionalNavigation navigation: WKNavigation!
+  ) {
     print("SCORM didStartProvisionalNavigation:", webView.url?.absoluteString ?? "nil")
   }
 
-  func webView(_ webView: WKWebView,
-               didCommit navigation: WKNavigation!) {
+  func webView(
+    _ webView: WKWebView,
+    didCommit navigation: WKNavigation!
+  ) {
     print("SCORM didCommit:", webView.url?.absoluteString ?? "nil")
   }
 
-  func webView(_ webView: WKWebView,
-               didFinish navigation: WKNavigation!) {
+  func webView(
+    _ webView: WKWebView,
+    didFinish navigation: WKNavigation!
+  ) {
     print("SCORM didFinish:", webView.url?.absoluteString ?? "nil")
   }
 
-  func webView(_ webView: WKWebView,
-               didFail navigation: WKNavigation!,
-               withError error: Error) {
+  func webView(
+    _ webView: WKWebView,
+    didFail navigation: WKNavigation!,
+    withError error: Error
+  ) {
     print("SCORM didFail:", error.localizedDescription)
   }
 
-  func webView(_ webView: WKWebView,
-               didFailProvisionalNavigation navigation: WKNavigation!,
-               withError error: Error) {
+  func webView(
+    _ webView: WKWebView,
+    didFailProvisionalNavigation navigation: WKNavigation!,
+    withError error: Error
+  ) {
     print("SCORM didFailProvisionalNavigation:", error.localizedDescription)
     print("SCORM failed URL:", webView.url?.absoluteString ?? "nil")
   }
 
-  func webView(_ webView: WKWebView,
-               decidePolicyFor navigationAction: WKNavigationAction,
-               decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+  func webView(
+    _ webView: WKWebView,
+    decidePolicyFor navigationAction: WKNavigationAction,
+    decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+  ) {
     print("SCORM navigationAction:", navigationAction.request.url?.absoluteString ?? "nil")
     decisionHandler(.allow)
   }
 
-  func webView(_ webView: WKWebView,
-               createWebViewWith configuration: WKWebViewConfiguration,
-               for navigationAction: WKNavigationAction,
-               windowFeatures: WKWindowFeatures) -> WKWebView? {
+  func webView(
+    _ webView: WKWebView,
+    createWebViewWith configuration: WKWebViewConfiguration,
+    for navigationAction: WKNavigationAction,
+    windowFeatures: WKWindowFeatures
+  ) -> WKWebView? {
     let popupConfig = makeWebViewConfiguration()
     let popupWebView = WKWebView(frame: .zero, configuration: popupConfig)
     popupWebView.navigationDelegate = self
@@ -282,13 +308,16 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
     return popupWebView
   }
 
-  func userContentController(_ userContentController: WKUserContentController,
-                             didReceive message: WKScriptMessage) {
+  func userContentController(
+    _ userContentController: WKUserContentController,
+    didReceive message: WKScriptMessage
+  ) {
     print("SCORM script message:", message.name)
 
     guard message.name == "scormStore" else { return }
     guard let body = message.body as? [String: Any],
-          let op = body["op"] as? String else { return }
+      let op = body["op"] as? String
+    else { return }
 
     switch op {
     case "load":
@@ -298,8 +327,9 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
 
     case "save":
       if let cmiObj = body["cmi"],
-         let data = try? JSONSerialization.data(withJSONObject: cmiObj, options: []),
-         let json = String(data: data, encoding: .utf8) {
+        let data = try? JSONSerialization.data(withJSONObject: cmiObj, options: []),
+        let json = String(data: data, encoding: .utf8)
+      {
         ScormProgressStore.shared.saveCMI(assetId: assetId, scoId: scoId, cmiJSON: json)
       }
 

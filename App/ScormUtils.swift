@@ -47,11 +47,13 @@ final class ScormUtils {
     let fm = FileManager.default
     let root = assetsRootURL()
 
-    guard let items = try? fm.contentsOfDirectory(
-      at: root,
-      includingPropertiesForKeys: [.isDirectoryKey],
-      options: [.skipsHiddenFiles]
-    ) else {
+    guard
+      let items = try? fm.contentsOfDirectory(
+        at: root,
+        includingPropertiesForKeys: [.isDirectoryKey],
+        options: [.skipsHiddenFiles]
+      )
+    else {
       return []
     }
 
@@ -154,7 +156,8 @@ final class ScormUtils {
     let archive = try Archive(url: zipURL, accessMode: .read)
     for entry in archive {
       let dest = scormDir.appendingPathComponent(entry.path)
-      try fm.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
+      try fm.createDirectory(
+        at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
       _ = try archive.extract(entry, to: dest)
     }
 
@@ -185,17 +188,23 @@ final class ScormUtils {
   private static func zipFileURL(in directory: URL) -> URL? {
     let fm = FileManager.default
 
-    guard let items = try? fm.contentsOfDirectory(
-      at: directory,
-      includingPropertiesForKeys: [.isRegularFileKey],
-      options: [.skipsHiddenFiles]
-    ) else {
+    guard
+      let items = try? fm.contentsOfDirectory(
+        at: directory,
+        includingPropertiesForKeys: [.isRegularFileKey],
+        options: [.skipsHiddenFiles]
+      )
+    else {
       return nil
     }
 
-    return items
+    return
+      items
       .filter { $0.pathExtension.lowercased() == "zip" }
-      .sorted { $0.lastPathComponent.localizedCaseInsensitiveCompare($1.lastPathComponent) == .orderedAscending }
+      .sorted {
+        $0.lastPathComponent.localizedCaseInsensitiveCompare($1.lastPathComponent)
+          == .orderedAscending
+      }
       .first
   }
 
@@ -204,11 +213,13 @@ final class ScormUtils {
     let now = Date().timeIntervalSince1970
     var results: [CourseFileRecord] = []
 
-    guard let enumerator = fm.enumerator(
-      at: scormDir,
-      includingPropertiesForKeys: [.isRegularFileKey, .fileSizeKey],
-      options: [.skipsHiddenFiles]
-    ) else {
+    guard
+      let enumerator = fm.enumerator(
+        at: scormDir,
+        includingPropertiesForKeys: [.isRegularFileKey, .fileSizeKey],
+        options: [.skipsHiddenFiles]
+      )
+    else {
       return []
     }
 
@@ -256,7 +267,8 @@ final class ScormUtils {
     guard !ext.isEmpty else { return nil }
 
     if let type = UTType(filenameExtension: ext),
-       let mimeType = type.preferredMIMEType {
+      let mimeType = type.preferredMIMEType
+    {
       return mimeType
     }
 
@@ -305,7 +317,8 @@ private final class ManifestParser: NSObject, XMLParserDelegate {
 
     let scos: [ScormSco] = chosenItems.compactMap { item in
       guard let identifierRef = item.identifierRef,
-            let href = resourceHrefByIdentifier[identifierRef] else {
+        let href = resourceHrefByIdentifier[identifierRef]
+      else {
         return nil
       }
 
@@ -323,11 +336,13 @@ private final class ManifestParser: NSObject, XMLParserDelegate {
     )
   }
 
-  func parser(_ parser: XMLParser,
-              didStartElement elementName: String,
-              namespaceURI: String?,
-              qualifiedName qName: String?,
-              attributes attributeDict: [String : String] = [:]) {
+  func parser(
+    _ parser: XMLParser,
+    didStartElement elementName: String,
+    namespaceURI: String?,
+    qualifiedName qName: String?,
+    attributes attributeDict: [String: String] = [:]
+  ) {
     let name = qName ?? elementName
     currentText = ""
 
@@ -341,7 +356,9 @@ private final class ManifestParser: NSObject, XMLParserDelegate {
       currentOrganizationId = attributeDict["identifier"]
 
     case "item":
-      if inOrganization, let orgId = currentOrganizationId, let identifier = attributeDict["identifier"] {
+      if inOrganization, let orgId = currentOrganizationId,
+        let identifier = attributeDict["identifier"]
+      {
         inItem = true
         currentItem = ItemNode(
           identifier: identifier,
@@ -369,10 +386,12 @@ private final class ManifestParser: NSObject, XMLParserDelegate {
     currentText += string
   }
 
-  func parser(_ parser: XMLParser,
-              didEndElement elementName: String,
-              namespaceURI: String?,
-              qualifiedName qName: String?) {
+  func parser(
+    _ parser: XMLParser,
+    didEndElement elementName: String,
+    namespaceURI: String?,
+    qualifiedName qName: String?
+  ) {
     let name = qName ?? elementName
     let text = currentText.trimmingCharacters(in: .whitespacesAndNewlines)
 

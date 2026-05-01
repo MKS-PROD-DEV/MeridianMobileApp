@@ -22,11 +22,14 @@ final class ScormCourseListViewController: UITableViewController {
     courses.count
   }
 
-  override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+  override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String?
+  {
     courses.isEmpty ? nil : "Available Courses"
   }
 
-  override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+  override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath)
+    -> UITableViewCell
+  {
     let course = courses[indexPath.row]
     let cell = tableView.dequeueReusableCell(withIdentifier: "CourseCell", for: indexPath)
 

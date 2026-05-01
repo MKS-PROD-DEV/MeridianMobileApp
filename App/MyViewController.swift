@@ -1,10 +1,10 @@
-import UIKit
-import WebKit
 import Capacitor
 import Foundation
 import Network
 import ObjectiveC
 import ObjectiveC.runtime
+import UIKit
+import WebKit
 
 final class HideKeyboardAccessoryWebView: WKWebView {
   override var inputAccessoryView: UIView? { nil }
@@ -19,9 +19,11 @@ final class NoInputAccessoryWebView: WKWebView {
   }
 
   private func removeInputAccessoryView() {
-    guard let targetView = scrollView.subviews.first(where: {
-      String(describing: type(of: $0)).hasPrefix("WKContent")
-    }) else { return }
+    guard
+      let targetView = scrollView.subviews.first(where: {
+        String(describing: type(of: $0)).hasPrefix("WKContent")
+      })
+    else { return }
 
     let className = "\(type(of: targetView))_NoInputAccessoryView"
     var newClass: AnyClass? = NSClassFromString(className)
@@ -30,7 +32,9 @@ final class NoInputAccessoryWebView: WKWebView {
       newClass = objc_allocateClassPair(targetClass, className, 0)
 
       if let newClass = newClass {
-        let method = class_getInstanceMethod(NoInputAccessoryWebView.self, #selector(getter: NoInputAccessoryWebView.inputAccessoryView))
+        let method = class_getInstanceMethod(
+          NoInputAccessoryWebView.self,
+          #selector(getter: NoInputAccessoryWebView.inputAccessoryView))
         class_addMethod(
           newClass,
           #selector(getter: UIResponder.inputAccessoryView),
@@ -48,9 +52,10 @@ final class NoInputAccessoryWebView: WKWebView {
 }
 
 final class MyViewController: CAPBridgeViewController,
-                              WKUIDelegate,
-                              WKNavigationDelegate,
-                              WKScriptMessageHandler {
+  WKUIDelegate,
+  WKNavigationDelegate,
+  WKScriptMessageHandler
+{
 
   private let monitor = NWPathMonitor()
   private let monitorQueue = DispatchQueue(label: "MyViewController.NetworkMonitor")
@@ -66,7 +71,7 @@ final class MyViewController: CAPBridgeViewController,
   private var isAuthenticatingOfflineMode = false
   private var hasPresentedInitialSiteSelection = false
   private var isWaitingForInitialSiteLoad = false
-    
+
   private let floatingMenuButton: UIButton = {
     let button = UIButton(type: .custom)
     button.translatesAutoresizingMaskIntoConstraints = false
@@ -78,14 +83,14 @@ final class MyViewController: CAPBridgeViewController,
     button.layer.shadowRadius = 8
     button.layer.shadowOffset = CGSize(width: 0, height: 4)
 
-      if let icon = AppTheme.logoImage {
-        button.setImage(icon, for: .normal)
-        button.imageView?.contentMode = .scaleAspectFit
-      } else {
-        button.setTitle(AppTheme.shortText, for: .normal)
-        button.setTitleColor(.label, for: .normal)
-        button.titleLabel?.font = .boldSystemFont(ofSize: 16)
-      }
+    if let icon = AppTheme.logoImage {
+      button.setImage(icon, for: .normal)
+      button.imageView?.contentMode = .scaleAspectFit
+    } else {
+      button.setTitle(AppTheme.shortText, for: .normal)
+      button.setTitleColor(.label, for: .normal)
+      button.titleLabel?.font = .boldSystemFont(ofSize: 16)
+    }
 
     button.alpha = 0
     button.isHidden = true
@@ -99,7 +104,9 @@ final class MyViewController: CAPBridgeViewController,
     return view
   }()
 
-  override public func webView(with frame: CGRect, configuration: WKWebViewConfiguration) -> WKWebView {
+  override public func webView(with frame: CGRect, configuration: WKWebViewConfiguration)
+    -> WKWebView
+  {
     return NoInputAccessoryWebView(frame: frame, configuration: configuration)
   }
 
@@ -107,14 +114,14 @@ final class MyViewController: CAPBridgeViewController,
     let button = UIButton(type: .custom)
     button.translatesAutoresizingMaskIntoConstraints = false
 
-      if let icon = AppTheme.logoImage {
-        button.setImage(icon, for: .normal)
-        button.imageView?.contentMode = .scaleAspectFit
-      } else {
-        button.setTitle(AppTheme.shortText, for: .normal)
-        button.setTitleColor(.black, for: .normal)
-        button.titleLabel?.font = .boldSystemFont(ofSize: 36)
-      }
+    if let icon = AppTheme.logoImage {
+      button.setImage(icon, for: .normal)
+      button.imageView?.contentMode = .scaleAspectFit
+    } else {
+      button.setTitle(AppTheme.shortText, for: .normal)
+      button.setTitleColor(.black, for: .normal)
+      button.titleLabel?.font = .boldSystemFont(ofSize: 36)
+    }
 
     return button
   }()
@@ -201,9 +208,9 @@ final class MyViewController: CAPBridgeViewController,
   private var loadingFillWidthConstraint: NSLayoutConstraint?
   private var startupLogoCenterYConstraint: NSLayoutConstraint?
   private var startupLogoTopConstraint: NSLayoutConstraint?
-    
+
   override func viewDidAppear(_ animated: Bool) {
-      super.viewDidAppear(animated)
+    super.viewDidAppear(animated)
     presentInitialSiteSelectionIfNeeded()
   }
   override func viewDidLoad() {
@@ -215,7 +222,8 @@ final class MyViewController: CAPBridgeViewController,
     }
 
     if let jsPath = Bundle.main.path(forResource: "nativeAssetStore", ofType: "js"),
-       let js = try? String(contentsOfFile: jsPath, encoding: .utf8) {
+      let js = try? String(contentsOfFile: jsPath, encoding: .utf8)
+    {
       let script = WKUserScript(
         source: js,
         injectionTime: .atDocumentStart,
@@ -223,18 +231,20 @@ final class MyViewController: CAPBridgeViewController,
       )
       webView.configuration.userContentController.addUserScript(script)
     } else {
-      print("nativeAssetStore.js not found in app bundle. Make sure it's included in Copy Bundle Resources / App target.")
+      print(
+        "nativeAssetStore.js not found in app bundle. Make sure it's included in Copy Bundle Resources / App target."
+      )
     }
 
     let bridgeJS = """
-    window.openOfflineScorm = function(assetId) {
-      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.openScorm) {
-        window.webkit.messageHandlers.openScorm.postMessage({ assetId: assetId });
-      } else {
-        console.log("openScorm handler not available");
-      }
-    };
-    """
+      window.openOfflineScorm = function(assetId) {
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.openScorm) {
+          window.webkit.messageHandlers.openScorm.postMessage({ assetId: assetId });
+        } else {
+          console.log("openScorm handler not available");
+        }
+      };
+      """
     let bridgeScript = WKUserScript(
       source: bridgeJS,
       injectionTime: .atDocumentStart,
@@ -264,8 +274,10 @@ final class MyViewController: CAPBridgeViewController,
     NSLayoutConstraint.activate([
       floatingMenuButton.widthAnchor.constraint(equalToConstant: 56),
       floatingMenuButton.heightAnchor.constraint(equalToConstant: 56),
-      floatingMenuButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
-      floatingMenuButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+      floatingMenuButton.trailingAnchor.constraint(
+        equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+      floatingMenuButton.bottomAnchor.constraint(
+        equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
     ])
 
     floatingMenuButton.addTarget(self, action: #selector(showFloatingMenu), for: .touchUpInside)
@@ -278,7 +290,7 @@ final class MyViewController: CAPBridgeViewController,
       startupOverlay.topAnchor.constraint(equalTo: view.topAnchor),
       startupOverlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
       startupOverlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      startupOverlay.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+      startupOverlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
     ])
 
     startupOverlay.addSubview(startupLogoButton)
@@ -291,8 +303,10 @@ final class MyViewController: CAPBridgeViewController,
     startupOverlay.addSubview(offlineSettingsButton)
     startupOverlay.addSubview(offlineCoursesContainerView)
 
-    startupLogoCenterYConstraint = startupLogoButton.centerYAnchor.constraint(equalTo: startupOverlay.centerYAnchor, constant: -40)
-    startupLogoTopConstraint = startupLogoButton.topAnchor.constraint(equalTo: startupOverlay.safeAreaLayoutGuide.topAnchor, constant: 20)
+    startupLogoCenterYConstraint = startupLogoButton.centerYAnchor.constraint(
+      equalTo: startupOverlay.centerYAnchor, constant: -40)
+    startupLogoTopConstraint = startupLogoButton.topAnchor.constraint(
+      equalTo: startupOverlay.safeAreaLayoutGuide.topAnchor, constant: 20)
     startupLogoTopConstraint?.isActive = false
 
     startupLogoCenterYConstraint?.isActive = true
@@ -318,18 +332,25 @@ final class MyViewController: CAPBridgeViewController,
       offlineTitleLabel.centerXAnchor.constraint(equalTo: startupOverlay.centerXAnchor),
 
       offlineHelpButton.topAnchor.constraint(equalTo: offlineTitleLabel.bottomAnchor, constant: 14),
-      offlineHelpButton.leadingAnchor.constraint(equalTo: startupOverlay.safeAreaLayoutGuide.leadingAnchor, constant: 24),
+      offlineHelpButton.leadingAnchor.constraint(
+        equalTo: startupOverlay.safeAreaLayoutGuide.leadingAnchor, constant: 24),
 
       offlineGoOnlineButton.centerYAnchor.constraint(equalTo: offlineHelpButton.centerYAnchor),
       offlineGoOnlineButton.centerXAnchor.constraint(equalTo: startupOverlay.centerXAnchor),
 
-      offlineSettingsButton.topAnchor.constraint(equalTo: offlineTitleLabel.bottomAnchor, constant: 14),
-      offlineSettingsButton.trailingAnchor.constraint(equalTo: startupOverlay.safeAreaLayoutGuide.trailingAnchor, constant: -24),
+      offlineSettingsButton.topAnchor.constraint(
+        equalTo: offlineTitleLabel.bottomAnchor, constant: 14),
+      offlineSettingsButton.trailingAnchor.constraint(
+        equalTo: startupOverlay.safeAreaLayoutGuide.trailingAnchor, constant: -24),
 
-      offlineCoursesContainerView.topAnchor.constraint(equalTo: offlineHelpButton.bottomAnchor, constant: 18),
-      offlineCoursesContainerView.leadingAnchor.constraint(equalTo: startupOverlay.safeAreaLayoutGuide.leadingAnchor),
-      offlineCoursesContainerView.trailingAnchor.constraint(equalTo: startupOverlay.safeAreaLayoutGuide.trailingAnchor),
-      offlineCoursesContainerView.bottomAnchor.constraint(equalTo: startupOverlay.safeAreaLayoutGuide.bottomAnchor)
+      offlineCoursesContainerView.topAnchor.constraint(
+        equalTo: offlineHelpButton.bottomAnchor, constant: 18),
+      offlineCoursesContainerView.leadingAnchor.constraint(
+        equalTo: startupOverlay.safeAreaLayoutGuide.leadingAnchor),
+      offlineCoursesContainerView.trailingAnchor.constraint(
+        equalTo: startupOverlay.safeAreaLayoutGuide.trailingAnchor),
+      offlineCoursesContainerView.bottomAnchor.constraint(
+        equalTo: startupOverlay.safeAreaLayoutGuide.bottomAnchor),
     ])
 
     loadingFillWidthConstraint = loadingFillView.widthAnchor.constraint(equalToConstant: 0)
@@ -339,8 +360,10 @@ final class MyViewController: CAPBridgeViewController,
     startupLogoButton.isUserInteractionEnabled = false
 
     offlineHelpButton.addTarget(self, action: #selector(offlineHelpTapped), for: .touchUpInside)
-    offlineGoOnlineButton.addTarget(self, action: #selector(offlineGoOnlineTapped), for: .touchUpInside)
-    offlineSettingsButton.addTarget(self, action: #selector(offlineSettingsTapped), for: .touchUpInside)
+    offlineGoOnlineButton.addTarget(
+      self, action: #selector(offlineGoOnlineTapped), for: .touchUpInside)
+    offlineSettingsButton.addTarget(
+      self, action: #selector(offlineSettingsTapped), for: .touchUpInside)
 
     view.bringSubviewToFront(startupOverlay)
   }
@@ -396,7 +419,9 @@ final class MyViewController: CAPBridgeViewController,
   }
 
   private func finishStartupIfReady() {
-    guard startupSequenceCompleted, let initialOnlineState = pendingInitialOnlineState else { return }
+    guard startupSequenceCompleted, let initialOnlineState = pendingInitialOnlineState else {
+      return
+    }
 
     if initialOnlineState {
       showOnlineState(reloadWebView: true)
@@ -405,56 +430,56 @@ final class MyViewController: CAPBridgeViewController,
     }
   }
 
-    private func requestOfflineModeAccess(afterSuccess: (() -> Void)? = nil) {
-      if !AppConfiguration.isOfflineModeAuthenticationEnabled {
-        showOfflineState()
+  private func requestOfflineModeAccess(afterSuccess: (() -> Void)? = nil) {
+    if !AppConfiguration.isOfflineModeAuthenticationEnabled {
+      showOfflineState()
+      afterSuccess?()
+      return
+    }
+
+    guard !isAuthenticatingOfflineMode else { return }
+    isAuthenticatingOfflineMode = true
+
+    runBiometricAuth { [weak self] success in
+      guard let self = self else { return }
+      self.isAuthenticatingOfflineMode = false
+
+      if success {
+        self.showOfflineState()
         afterSuccess?()
-        return
-      }
-
-      guard !isAuthenticatingOfflineMode else { return }
-      isAuthenticatingOfflineMode = true
-
-      runBiometricAuth { [weak self] success in
-        guard let self = self else { return }
-        self.isAuthenticatingOfflineMode = false
-
-        if success {
-          self.showOfflineState()
-          afterSuccess?()
-        } else {
-          self.showLockFailure()
-        }
+      } else {
+        self.showLockFailure()
       }
     }
+  }
 
-    private func showOnlineState(reloadWebView: Bool = true) {
-      isShowingOfflineMode = false
-      isShowingConnectivityAlert = false
-      startupLogoButton.isUserInteractionEnabled = false
-      floatingMenuButton.isHidden = false
+  private func showOnlineState(reloadWebView: Bool = true) {
+    isShowingOfflineMode = false
+    isShowingConnectivityAlert = false
+    startupLogoButton.isUserInteractionEnabled = false
+    floatingMenuButton.isHidden = false
 
-      if let webView = self.webView {
-        webView.isHidden = false
-        view.sendSubviewToBack(webView)
+    if let webView = self.webView {
+      webView.isHidden = false
+      view.sendSubviewToBack(webView)
 
-        if reloadWebView {
-          isWaitingForInitialSiteLoad = true
-          loadingStatusLabel.text = "Preparing site..."
-          loadingTrackView.isHidden = false
-          loadingStatusLabel.isHidden = false
-          loadingTrackView.alpha = 1
-          loadingStatusLabel.alpha = 1
-          startupOverlay.alpha = 1
-          view.bringSubviewToFront(startupOverlay)
+      if reloadWebView {
+        isWaitingForInitialSiteLoad = true
+        loadingStatusLabel.text = "Preparing site..."
+        loadingTrackView.isHidden = false
+        loadingStatusLabel.isHidden = false
+        loadingTrackView.alpha = 1
+        loadingStatusLabel.alpha = 1
+        startupOverlay.alpha = 1
+        view.bringSubviewToFront(startupOverlay)
 
-          webView.load(URLRequest(url: AppConfiguration.launchURL))
-        } else {
-          didShowInitialWebContent = true
-          completeStartupOverlayDismissalIfNeeded()
-        }
+        webView.load(URLRequest(url: AppConfiguration.launchURL))
+      } else {
+        didShowInitialWebContent = true
+        completeStartupOverlayDismissalIfNeeded()
       }
     }
+  }
   private func showOfflineState() {
     isShowingOfflineMode = true
 
@@ -465,7 +490,7 @@ final class MyViewController: CAPBridgeViewController,
         startupOverlay.topAnchor.constraint(equalTo: view.topAnchor),
         startupOverlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         startupOverlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-        startupOverlay.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        startupOverlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       ])
     }
 
@@ -493,62 +518,68 @@ final class MyViewController: CAPBridgeViewController,
     embedOfflineCourseListIfNeeded()
     refreshOfflineCourseList()
 
-    UIView.animate(withDuration: 0.4, animations: {
-      self.loadingTrackView.alpha = 0
-      self.loadingStatusLabel.alpha = 0
-      self.offlineTitleLabel.alpha = 1
-      self.offlineHelpButton.alpha = 1
-      self.offlineGoOnlineButton.alpha = 1
-      self.offlineSettingsButton.alpha = 1
-      self.offlineCoursesContainerView.alpha = 1
-      self.startupOverlay.layoutIfNeeded()
-    }, completion: { _ in
-      self.loadingTrackView.isHidden = true
-      self.loadingStatusLabel.isHidden = true
-    })
+    UIView.animate(
+      withDuration: 0.4,
+      animations: {
+        self.loadingTrackView.alpha = 0
+        self.loadingStatusLabel.alpha = 0
+        self.offlineTitleLabel.alpha = 1
+        self.offlineHelpButton.alpha = 1
+        self.offlineGoOnlineButton.alpha = 1
+        self.offlineSettingsButton.alpha = 1
+        self.offlineCoursesContainerView.alpha = 1
+        self.startupOverlay.layoutIfNeeded()
+      },
+      completion: { _ in
+        self.loadingTrackView.isHidden = true
+        self.loadingStatusLabel.isHidden = true
+      })
   }
 
-    private func embedOfflineCourseListIfNeeded() {
-      guard embeddedOfflineCourseListNavController == nil else { return }
+  private func embedOfflineCourseListIfNeeded() {
+    guard embeddedOfflineCourseListNavController == nil else { return }
 
-      let courses = ScormUtils.loadAllCourses()
-      let courseListVC = ScormCourseListViewController(courses: courses)
-      let nav = UINavigationController(rootViewController: courseListVC)
-      nav.setNavigationBarHidden(false, animated: false)
+    let courses = ScormUtils.loadAllCourses()
+    let courseListVC = ScormCourseListViewController(courses: courses)
+    let nav = UINavigationController(rootViewController: courseListVC)
+    nav.setNavigationBarHidden(false, animated: false)
 
-      addChild(nav)
-      offlineCoursesContainerView.addSubview(nav.view)
-      nav.view.translatesAutoresizingMaskIntoConstraints = false
+    addChild(nav)
+    offlineCoursesContainerView.addSubview(nav.view)
+    nav.view.translatesAutoresizingMaskIntoConstraints = false
 
-      NSLayoutConstraint.activate([
-        nav.view.topAnchor.constraint(equalTo: offlineCoursesContainerView.topAnchor),
-        nav.view.bottomAnchor.constraint(equalTo: offlineCoursesContainerView.bottomAnchor),
-        nav.view.leadingAnchor.constraint(equalTo: offlineCoursesContainerView.leadingAnchor),
-        nav.view.trailingAnchor.constraint(equalTo: offlineCoursesContainerView.trailingAnchor)
-      ])
+    NSLayoutConstraint.activate([
+      nav.view.topAnchor.constraint(equalTo: offlineCoursesContainerView.topAnchor),
+      nav.view.bottomAnchor.constraint(equalTo: offlineCoursesContainerView.bottomAnchor),
+      nav.view.leadingAnchor.constraint(equalTo: offlineCoursesContainerView.leadingAnchor),
+      nav.view.trailingAnchor.constraint(equalTo: offlineCoursesContainerView.trailingAnchor),
+    ])
 
-      nav.didMove(toParent: self)
-      embeddedOfflineCourseListNavController = nav
-    }
+    nav.didMove(toParent: self)
+    embeddedOfflineCourseListNavController = nav
+  }
 
-    private func refreshOfflineCourseList() {
-      let courses = ScormUtils.loadAllCourses()
-      let courseListVC = ScormCourseListViewController(courses: courses)
-      embeddedOfflineCourseListNavController?.setViewControllers([courseListVC], animated: false)
-      embeddedOfflineCourseListNavController?.setNavigationBarHidden(false, animated: false)
-    }
+  private func refreshOfflineCourseList() {
+    let courses = ScormUtils.loadAllCourses()
+    let courseListVC = ScormCourseListViewController(courses: courses)
+    embeddedOfflineCourseListNavController?.setViewControllers([courseListVC], animated: false)
+    embeddedOfflineCourseListNavController?.setNavigationBarHidden(false, animated: false)
+  }
 
-    private func completeStartupOverlayDismissalIfNeeded() {
-      guard startupOverlay.superview != nil else { return }
+  private func completeStartupOverlayDismissalIfNeeded() {
+    guard startupOverlay.superview != nil else { return }
 
-      UIView.animate(withDuration: 0.3, animations: {
+    UIView.animate(
+      withDuration: 0.3,
+      animations: {
         self.startupOverlay.alpha = 0
         self.floatingMenuButton.alpha = 1
-      }, completion: { _ in
+      },
+      completion: { _ in
         self.startupOverlay.removeFromSuperview()
       })
-    }
-    
+  }
+
   private func presentLostInternetAlert() {
     guard !isShowingConnectivityAlert else { return }
 
@@ -564,71 +595,78 @@ final class MyViewController: CAPBridgeViewController,
       preferredStyle: .alert
     )
 
-    alert.addAction(UIAlertAction(title: "Offline Mode", style: .default, handler: { [weak self] _ in
-      guard let self = self else { return }
-      self.isShowingConnectivityAlert = false
-      self.dismissPresentedContentIfNeeded {
-        self.requestOfflineModeAccess()
-      }
-    }))
+    alert.addAction(
+      UIAlertAction(
+        title: "Offline Mode", style: .default,
+        handler: { [weak self] _ in
+          guard let self = self else { return }
+          self.isShowingConnectivityAlert = false
+          self.dismissPresentedContentIfNeeded {
+            self.requestOfflineModeAccess()
+          }
+        }))
 
-    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: { [weak self] _ in
-      self?.isShowingConnectivityAlert = false
-    }))
+    alert.addAction(
+      UIAlertAction(
+        title: "Cancel", style: .cancel,
+        handler: { [weak self] _ in
+          self?.isShowingConnectivityAlert = false
+        }))
 
     present(alert, animated: true)
   }
 
-    private func presentInitialSiteSelectionIfNeeded() {
-      print("hasSelectedBranding:", AppConfiguration.hasSelectedBranding)
+  private func presentInitialSiteSelectionIfNeeded() {
+    print("hasSelectedBranding:", AppConfiguration.hasSelectedBranding)
 
-      guard !AppConfiguration.hasSelectedBranding else { return }
-      guard !hasPresentedInitialSiteSelection else { return }
-      guard presentedViewController == nil else { return }
+    guard !AppConfiguration.hasSelectedBranding else { return }
+    guard !hasPresentedInitialSiteSelection else { return }
+    guard presentedViewController == nil else { return }
 
-      hasPresentedInitialSiteSelection = true
+    hasPresentedInitialSiteSelection = true
 
-      let vc = InitialSiteSelectionViewController { [weak self] branding in
-        AppConfiguration.branding = branding
-        self?.dismiss(animated: true) {
-          self?.handleBrandingSelectionApplied()
-        }
+    let vc = InitialSiteSelectionViewController { [weak self] branding in
+      AppConfiguration.branding = branding
+      self?.dismiss(animated: true) {
+        self?.handleBrandingSelectionApplied()
       }
-
-      present(vc, animated: true)
     }
 
-    private func handleBrandingSelectionApplied() {
-      if let webView = self.webView {
-        webView.load(URLRequest(url: AppConfiguration.launchURL))
-      }
+    present(vc, animated: true)
+  }
 
-      floatingMenuButton.backgroundColor = .systemBackground
-
-      if let icon = AppTheme.logoImage {
-        floatingMenuButton.setImage(icon, for: .normal)
-        floatingMenuButton.setTitle(nil, for: .normal)
-      } else {
-        floatingMenuButton.setImage(nil, for: .normal)
-        floatingMenuButton.setTitle(AppTheme.shortText, for: .normal)
-      }
-
-      startupLogoButton.backgroundColor = .clear
-      if let icon = AppTheme.logoImage {
-        startupLogoButton.setImage(icon, for: .normal)
-        startupLogoButton.setTitle(nil, for: .normal)
-      } else {
-        startupLogoButton.setImage(nil, for: .normal)
-        startupLogoButton.setTitle(AppTheme.shortText, for: .normal)
-        startupLogoButton.setTitleColor(.black, for: .normal)
-      }
-
-      loadingFillView.backgroundColor = AppTheme.primaryColor
+  private func handleBrandingSelectionApplied() {
+    if let webView = self.webView {
+      webView.load(URLRequest(url: AppConfiguration.launchURL))
     }
-    
+
+    floatingMenuButton.backgroundColor = .systemBackground
+
+    if let icon = AppTheme.logoImage {
+      floatingMenuButton.setImage(icon, for: .normal)
+      floatingMenuButton.setTitle(nil, for: .normal)
+    } else {
+      floatingMenuButton.setImage(nil, for: .normal)
+      floatingMenuButton.setTitle(AppTheme.shortText, for: .normal)
+    }
+
+    startupLogoButton.backgroundColor = .clear
+    if let icon = AppTheme.logoImage {
+      startupLogoButton.setImage(icon, for: .normal)
+      startupLogoButton.setTitle(nil, for: .normal)
+    } else {
+      startupLogoButton.setImage(nil, for: .normal)
+      startupLogoButton.setTitle(AppTheme.shortText, for: .normal)
+      startupLogoButton.setTitleColor(.black, for: .normal)
+    }
+
+    loadingFillView.backgroundColor = AppTheme.primaryColor
+  }
+
   private func dismissPresentedContentIfNeeded(completion: @escaping () -> Void) {
     if let presented = presentedViewController,
-       !(presented is UIAlertController) {
+      !(presented is UIAlertController)
+    {
       presented.dismiss(animated: true) {
         completion()
       }
@@ -648,21 +686,24 @@ final class MyViewController: CAPBridgeViewController,
     }
   }
 
-    private func showLockFailure() {
-      let alert = UIAlertController(
-        title: "Authentication Required",
-        message: "You need authentication to enter Offline Mode.",
-        preferredStyle: .alert
-      )
+  private func showLockFailure() {
+    let alert = UIAlertController(
+      title: "Authentication Required",
+      message: "You need authentication to enter Offline Mode.",
+      preferredStyle: .alert
+    )
 
-      alert.addAction(UIAlertAction(title: "Try Again", style: .default, handler: { [weak self] _ in
-        self?.requestOfflineModeAccess()
-      }))
+    alert.addAction(
+      UIAlertAction(
+        title: "Try Again", style: .default,
+        handler: { [weak self] _ in
+          self?.requestOfflineModeAccess()
+        }))
 
-      alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
 
-      present(alert, animated: true)
-    }
+    present(alert, animated: true)
+  }
 
   @objc private func offlineLogoTapped() {
     refreshOfflineCourseList()
@@ -695,17 +736,26 @@ final class MyViewController: CAPBridgeViewController,
   @objc private func showFloatingMenu() {
     let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
 
-    alert.addAction(UIAlertAction(title: "Offline Mode", style: .default, handler: { [weak self] _ in
-      self?.requestOfflineModeAccess()
-    }))
+    alert.addAction(
+      UIAlertAction(
+        title: "Offline Mode", style: .default,
+        handler: { [weak self] _ in
+          self?.requestOfflineModeAccess()
+        }))
 
-    alert.addAction(UIAlertAction(title: "Settings", style: .default, handler: { [weak self] _ in
-      self?.presentSettings()
-    }))
+    alert.addAction(
+      UIAlertAction(
+        title: "Settings", style: .default,
+        handler: { [weak self] _ in
+          self?.presentSettings()
+        }))
 
-    alert.addAction(UIAlertAction(title: "Help", style: .default, handler: { [weak self] _ in
-      self?.presentHelp()
-    }))
+    alert.addAction(
+      UIAlertAction(
+        title: "Help", style: .default,
+        handler: { [weak self] _ in
+          self?.presentHelp()
+        }))
 
     alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
 
@@ -717,22 +767,22 @@ final class MyViewController: CAPBridgeViewController,
     present(alert, animated: true)
   }
 
-    private func presentCourseList() {
-      let courses = ScormUtils.loadAllCourses()
-      let vc = ScormCourseListViewController(courses: courses)
-      let nav = UINavigationController(rootViewController: vc)
-      nav.modalPresentationStyle = .formSheet
-      present(nav, animated: true)
-    }
+  private func presentCourseList() {
+    let courses = ScormUtils.loadAllCourses()
+    let vc = ScormCourseListViewController(courses: courses)
+    let nav = UINavigationController(rootViewController: vc)
+    nav.modalPresentationStyle = .formSheet
+    present(nav, animated: true)
+  }
 
-    private func presentSettings() {
-      let vc = SettingsViewController { [weak self] _ in
-        self?.handleBrandingSelectionApplied()
-      }
-      let nav = UINavigationController(rootViewController: vc)
-      nav.modalPresentationStyle = .formSheet
-      present(nav, animated: true)
+  private func presentSettings() {
+    let vc = SettingsViewController { [weak self] _ in
+      self?.handleBrandingSelectionApplied()
     }
+    let nav = UINavigationController(rootViewController: vc)
+    nav.modalPresentationStyle = .formSheet
+    present(nav, animated: true)
+  }
 
   private func presentHelp() {
     let vc = HelpViewController()
@@ -741,12 +791,15 @@ final class MyViewController: CAPBridgeViewController,
     present(nav, animated: true)
   }
 
-  func userContentController(_ userContentController: WKUserContentController,
-                             didReceive message: WKScriptMessage) {
+  func userContentController(
+    _ userContentController: WKUserContentController,
+    didReceive message: WKScriptMessage
+  ) {
     guard message.name == "openScorm" else { return }
 
     if let body = message.body as? [String: Any],
-       let assetId = body["assetId"] as? String {
+      let assetId = body["assetId"] as? String
+    {
       presentScormLessonList(assetId: assetId)
     } else if let assetId = message.body as? String {
       presentScormLessonList(assetId: assetId)
@@ -755,31 +808,33 @@ final class MyViewController: CAPBridgeViewController,
     }
   }
 
-    private func presentScormLessonList(assetId: String) {
-      do {
-        let course = try ScormUtils.loadCourse(assetId: assetId)
+  private func presentScormLessonList(assetId: String) {
+    do {
+      let course = try ScormUtils.loadCourse(assetId: assetId)
 
-        let vc = ScormLessonListViewController(
-          assetId: course.assetId,
-          scormDir: course.scormDir,
-          manifest: course.manifest
-        )
+      let vc = ScormLessonListViewController(
+        assetId: course.assetId,
+        scormDir: course.scormDir,
+        manifest: course.manifest
+      )
 
-        let nav = UINavigationController(rootViewController: vc)
-        nav.modalPresentationStyle = .formSheet
-        present(nav, animated: true)
-      } catch {
-        print("SCORM error:", error)
-      }
+      let nav = UINavigationController(rootViewController: vc)
+      nav.modalPresentationStyle = .formSheet
+      present(nav, animated: true)
+    } catch {
+      print("SCORM error:", error)
     }
+  }
 
   override var prefersStatusBarHidden: Bool { false }
   override var preferredStatusBarStyle: UIStatusBarStyle { .default }
 
-  func webView(_ webView: WKWebView,
-               createWebViewWith configuration: WKWebViewConfiguration,
-               for navigationAction: WKNavigationAction,
-               windowFeatures: WKWindowFeatures) -> WKWebView? {
+  func webView(
+    _ webView: WKWebView,
+    createWebViewWith configuration: WKWebViewConfiguration,
+    for navigationAction: WKNavigationAction,
+    windowFeatures: WKWindowFeatures
+  ) -> WKWebView? {
 
     let popupWebView = NoInputAccessoryWebView(frame: .zero, configuration: configuration)
     let popupVC = PopupWebViewController(popupWebView: popupWebView)
@@ -794,38 +849,43 @@ final class MyViewController: CAPBridgeViewController,
 
     return popupWebView
   }
-    
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-      guard webView == self.webView else { return }
 
-      if isWaitingForInitialSiteLoad {
-        isWaitingForInitialSiteLoad = false
-        didShowInitialWebContent = true
-        completeStartupOverlayDismissalIfNeeded()
-      }
+  func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    guard webView == self.webView else { return }
+
+    if isWaitingForInitialSiteLoad {
+      isWaitingForInitialSiteLoad = false
+      didShowInitialWebContent = true
+      completeStartupOverlayDismissalIfNeeded()
     }
-    
-    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-      guard webView == self.webView else { return }
+  }
 
-      if isWaitingForInitialSiteLoad {
-        isWaitingForInitialSiteLoad = false
-        completeStartupOverlayDismissalIfNeeded()
-      }
+  func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+    guard webView == self.webView else { return }
+
+    if isWaitingForInitialSiteLoad {
+      isWaitingForInitialSiteLoad = false
+      completeStartupOverlayDismissalIfNeeded()
     }
+  }
 
-    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-      guard webView == self.webView else { return }
+  func webView(
+    _ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!,
+    withError error: Error
+  ) {
+    guard webView == self.webView else { return }
 
-      if isWaitingForInitialSiteLoad {
-        isWaitingForInitialSiteLoad = false
-        completeStartupOverlayDismissalIfNeeded()
-      }
+    if isWaitingForInitialSiteLoad {
+      isWaitingForInitialSiteLoad = false
+      completeStartupOverlayDismissalIfNeeded()
     }
-    
-  func webView(_ webView: WKWebView,
-               decidePolicyFor navigationAction: WKNavigationAction,
-               decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+  }
+
+  func webView(
+    _ webView: WKWebView,
+    decidePolicyFor navigationAction: WKNavigationAction,
+    decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+  ) {
     decisionHandler(.allow)
   }
 }
@@ -859,7 +919,7 @@ final class PopupWebViewController: UIViewController {
       popupWebView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
       popupWebView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
       popupWebView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      popupWebView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+      popupWebView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
     ])
   }
 

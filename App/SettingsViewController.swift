@@ -66,7 +66,8 @@ final class SettingsViewController: UITableViewController {
     }
   }
 
-  override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+  override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String?
+  {
     guard let section = Section(rawValue: section) else { return nil }
 
     switch section {
@@ -76,7 +77,9 @@ final class SettingsViewController: UITableViewController {
     }
   }
 
-  override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+  override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath)
+    -> UITableViewCell
+  {
     guard let section = Section(rawValue: indexPath.section) else {
       return UITableViewCell()
     }
@@ -97,7 +100,8 @@ final class SettingsViewController: UITableViewController {
       switch row {
       case .site:
         content.text = "Organization Selection"
-        content.secondaryText = "\(AppConfiguration.branding.displayName) • \(AppConfiguration.branding.hostDisplayName)"
+        content.secondaryText =
+          "\(AppConfiguration.branding.displayName) • \(AppConfiguration.branding.hostDisplayName)"
         cell.contentConfiguration = content
         cell.accessoryType = .disclosureIndicator
 
@@ -158,16 +162,20 @@ final class SettingsViewController: UITableViewController {
       let titleBase = "\(branding.displayName) — \(branding.hostDisplayName)"
       let title = isCurrent ? "✓ \(titleBase)" : titleBase
 
-      alert.addAction(UIAlertAction(title: title, style: .default, handler: { [weak self] _ in
-        self?.applyBranding(branding)
-      }))
+      alert.addAction(
+        UIAlertAction(
+          title: title, style: .default,
+          handler: { [weak self] _ in
+            self?.applyBranding(branding)
+          }))
     }
 
     alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
 
     if let popover = alert.popoverPresentationController,
-       let selectedRow = tableView.indexPathForSelectedRow,
-       let cell = tableView.cellForRow(at: selectedRow) {
+      let selectedRow = tableView.indexPathForSelectedRow,
+      let cell = tableView.cellForRow(at: selectedRow)
+    {
       popover.sourceView = cell
       popover.sourceRect = cell.bounds
     }
@@ -198,9 +206,12 @@ final class SettingsViewController: UITableViewController {
     )
 
     alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-    alert.addAction(UIAlertAction(title: "Clear", style: .destructive, handler: { [weak self] _ in
-      self?.clearAllDownloadedContent()
-    }))
+    alert.addAction(
+      UIAlertAction(
+        title: "Clear", style: .destructive,
+        handler: { [weak self] _ in
+          self?.clearAllDownloadedContent()
+        }))
 
     present(alert, animated: true)
   }
