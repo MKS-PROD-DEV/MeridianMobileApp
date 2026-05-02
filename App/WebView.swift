@@ -4,10 +4,9 @@ import WebKit
 extension MyViewController {
   func configureBridgeScripts(for webView: WKWebView) {
     if let jsPath = Bundle.main.path(forResource: "nativeAssetStore", ofType: "js"),
-      let js = try? String(contentsOfFile: jsPath, encoding: .utf8)
-    {
+      let jscript = try? String(contentsOfFile: jsPath, encoding: .utf8) {
       let script = WKUserScript(
-        source: js,
+        source: jscript,
         injectionTime: .atDocumentStart,
         forMainFrameOnly: false
       )
@@ -43,8 +42,7 @@ extension MyViewController {
     guard message.name == "openScorm" else { return }
 
     if let body = message.body as? [String: Any],
-      let assetId = body["assetId"] as? String
-    {
+      let assetId = body["assetId"] as? String {
       presentScormLessonList(assetId: assetId)
     } else if let assetId = message.body as? String {
       presentScormLessonList(assetId: assetId)
@@ -143,7 +141,7 @@ final class PopupWebViewController: UIViewController {
       popupWebView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
       popupWebView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
       popupWebView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      popupWebView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      popupWebView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
     ])
   }
 

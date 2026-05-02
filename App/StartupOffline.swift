@@ -8,7 +8,7 @@ extension MyViewController {
       startupOverlay.topAnchor.constraint(equalTo: view.topAnchor),
       startupOverlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
       startupOverlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      startupOverlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      startupOverlay.trailingAnchor.constraint(equalTo: view.trailingAnchor)
     ])
 
     startupOverlay.addSubview(startupLogoButton)
@@ -70,7 +70,7 @@ extension MyViewController {
       offlineCoursesContainerView.topAnchor.constraint(equalTo: offlineHelpButton.bottomAnchor, constant: 8),
       offlineCoursesContainerView.leadingAnchor.constraint(equalTo: startupOverlay.safeAreaLayoutGuide.leadingAnchor),
       offlineCoursesContainerView.trailingAnchor.constraint(equalTo: startupOverlay.safeAreaLayoutGuide.trailingAnchor),
-      offlineCoursesContainerView.bottomAnchor.constraint(equalTo: startupOverlay.safeAreaLayoutGuide.bottomAnchor),
+      offlineCoursesContainerView.bottomAnchor.constraint(equalTo: startupOverlay.safeAreaLayoutGuide.bottomAnchor)
     ])
 
     loadingFillWidthConstraint = loadingFillView.widthAnchor.constraint(equalToConstant: 0)
@@ -207,7 +207,7 @@ extension MyViewController {
         startupOverlay.topAnchor.constraint(equalTo: view.topAnchor),
         startupOverlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         startupOverlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-        startupOverlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+        startupOverlay.trailingAnchor.constraint(equalTo: view.trailingAnchor)
       ])
     }
 
@@ -271,7 +271,7 @@ extension MyViewController {
       nav.view.topAnchor.constraint(equalTo: offlineCoursesContainerView.topAnchor),
       nav.view.bottomAnchor.constraint(equalTo: offlineCoursesContainerView.bottomAnchor),
       nav.view.leadingAnchor.constraint(equalTo: offlineCoursesContainerView.leadingAnchor),
-      nav.view.trailingAnchor.constraint(equalTo: offlineCoursesContainerView.trailingAnchor),
+      nav.view.trailingAnchor.constraint(equalTo: offlineCoursesContainerView.trailingAnchor)
     ])
 
     nav.didMove(toParent: self)

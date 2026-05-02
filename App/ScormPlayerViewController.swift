@@ -85,8 +85,7 @@ private final class ScormURLSchemeHandler: NSObject, WKURLSchemeHandler {
     guard !ext.isEmpty else { return nil }
 
     if let type = UTType(filenameExtension: ext),
-      let mimeType = type.preferredMIMEType
-    {
+      let mimeType = type.preferredMIMEType {
       return mimeType
     }
 
@@ -110,8 +109,7 @@ private final class ScormURLSchemeHandler: NSObject, WKURLSchemeHandler {
 
   private func textEncodingName(for mimeType: String) -> String? {
     if mimeType.hasPrefix("text/") || mimeType == "application/javascript"
-      || mimeType == "application/json"
-    {
+      || mimeType == "application/json" {
       return "utf-8"
     }
     return nil
@@ -119,8 +117,7 @@ private final class ScormURLSchemeHandler: NSObject, WKURLSchemeHandler {
 }
 
 final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler, WKUIDelegate,
-  WKNavigationDelegate
-{
+  WKNavigationDelegate {
   private let injectedJS: String
   private let launchFileURL: URL
   private let readAccessURL: URL
@@ -131,11 +128,11 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
   private lazy var webView: WKWebView = {
     let config = makeWebViewConfiguration()
 
-    let wv = WKWebView(frame: .zero, configuration: config)
-    wv.allowsBackForwardNavigationGestures = true
-    wv.uiDelegate = self
-    wv.navigationDelegate = self
-    return wv
+    let webView = WKWebView(frame: .zero, configuration: config)
+      webView.allowsBackForwardNavigationGestures = true
+      webView.uiDelegate = self
+      webView.navigationDelegate = self
+    return webView
   }()
 
   init(
@@ -193,7 +190,7 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
       webView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
       webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
       webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      webView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
     ])
 
     loadScormContent()
@@ -316,20 +313,19 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
 
     guard message.name == "scormStore" else { return }
     guard let body = message.body as? [String: Any],
-      let op = body["op"] as? String
+      let ops = body["op"] as? String
     else { return }
 
-    switch op {
+    switch ops {
     case "load":
       let json = ScormProgressStore.shared.loadCMI(assetId: assetId, scoId: scoId) ?? "{}"
-      let js = "window.__scormNativeStoreLoad && window.__scormNativeStoreLoad(\(json));"
-      webView.evaluateJavaScript(js, completionHandler: nil)
+      let jscript = "window.__scormNativeStoreLoad && window.__scormNativeStoreLoad(\(json));"
+      webView.evaluateJavaScript(jscript, completionHandler: nil)
 
     case "save":
       if let cmiObj = body["cmi"],
         let data = try? JSONSerialization.data(withJSONObject: cmiObj, options: []),
-        let json = String(data: data, encoding: .utf8)
-      {
+        let json = String(data: data, encoding: .utf8) {
         ScormProgressStore.shared.saveCMI(assetId: assetId, scoId: scoId, cmiJSON: json)
       }
 

@@ -9,7 +9,7 @@ extension MyViewController {
       floatingMenuButton.widthAnchor.constraint(equalToConstant: 56),
       floatingMenuButton.heightAnchor.constraint(equalToConstant: 56),
       floatingMenuButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
-      floatingMenuButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+      floatingMenuButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
     ])
 
     floatingMenuButton.addTarget(self, action: #selector(showFloatingMenu), for: .touchUpInside)
@@ -40,7 +40,7 @@ extension MyViewController {
       floatingHelpButton.widthAnchor.constraint(equalToConstant: 52),
       floatingHelpButton.heightAnchor.constraint(equalToConstant: 52),
       floatingHelpButton.centerXAnchor.constraint(equalTo: floatingMenuButton.centerXAnchor),
-      floatingHelpButton.centerYAnchor.constraint(equalTo: floatingMenuButton.centerYAnchor),
+      floatingHelpButton.centerYAnchor.constraint(equalTo: floatingMenuButton.centerYAnchor)
     ])
 
     [floatingOfflineButton, floatingSettingsButton, floatingHelpButton].forEach { button in

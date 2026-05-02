@@ -2,7 +2,6 @@ import Capacitor
 import Foundation
 import Network
 import ObjectiveC
-import ObjectiveC.runtime
 import UIKit
 import WebKit
 
@@ -248,7 +247,7 @@ final class MyViewController: CAPBridgeViewController, WKUIDelegate, WKNavigatio
       button.imageView?.contentMode = .scaleAspectFit
       return button
     }()
-    
+
   var loadingFillWidthConstraint: NSLayoutConstraint?
   var startupLogoCenterYConstraint: NSLayoutConstraint?
   var startupLogoTopConstraint: NSLayoutConstraint?

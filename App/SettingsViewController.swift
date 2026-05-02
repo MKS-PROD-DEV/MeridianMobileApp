@@ -248,14 +248,14 @@ final class SettingsViewController: UITableViewController {
   }
 
   private func clearAllDownloadedContent() {
-    let fm = FileManager.default
+    let fileManager = FileManager.default
     let assetsRoot = ScormUtils.assetsRootURL()
 
     do {
-      if fm.fileExists(atPath: assetsRoot.path) {
-        let contents = try fm.contentsOfDirectory(at: assetsRoot, includingPropertiesForKeys: nil)
+      if fileManager.fileExists(atPath: assetsRoot.path) {
+        let contents = try fileManager.contentsOfDirectory(at: assetsRoot, includingPropertiesForKeys: nil)
         for url in contents {
-          try fm.removeItem(at: url)
+          try fileManager.removeItem(at: url)
         }
       }
 

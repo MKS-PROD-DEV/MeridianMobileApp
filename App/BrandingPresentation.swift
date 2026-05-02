@@ -11,14 +11,14 @@ extension MyViewController {
 
     hasPresentedInitialSiteSelection = true
 
-    let vc = InitialSiteSelectionViewController { [weak self] branding in
+    let viewController = InitialSiteSelectionViewController { [weak self] branding in
       AppConfiguration.branding = branding
       self?.dismiss(animated: true) {
         self?.handleBrandingSelectionApplied()
       }
     }
 
-    present(vc, animated: true)
+    present(viewController, animated: true)
   }
 
   func handleBrandingSelectionApplied() {
@@ -53,8 +53,7 @@ extension MyViewController {
 
   func dismissPresentedContentIfNeeded(completion: @escaping () -> Void) {
     if let presented = presentedViewController,
-      !(presented is UIAlertController)
-    {
+      !(presented is UIAlertController) {
       presented.dismiss(animated: true) {
         completion()
       }
@@ -65,26 +64,26 @@ extension MyViewController {
 
   func presentCourseList() {
     let courses = ScormUtils.loadAllCourses()
-    let vc = ScormCourseListViewController(courses: courses)
-    let nav = UINavigationController(rootViewController: vc)
+    let viewController = ScormCourseListViewController(courses: courses)
+    let nav = UINavigationController(rootViewController: viewController)
     AppTheme.applyNavigationBarAppearance(to: nav)
     nav.modalPresentationStyle = .pageSheet
     present(nav, animated: true)
   }
 
   func presentSettings() {
-    let vc = SettingsViewController { [weak self] _ in
+    let viewController = SettingsViewController { [weak self] _ in
       self?.handleBrandingSelectionApplied()
     }
-    let nav = UINavigationController(rootViewController: vc)
+    let nav = UINavigationController(rootViewController: viewController)
     AppTheme.applyNavigationBarAppearance(to: nav)
     nav.modalPresentationStyle = .pageSheet
     present(nav, animated: true)
   }
 
   func presentHelp() {
-    let vc = HelpViewController()
-    let nav = UINavigationController(rootViewController: vc)
+    let viewController = HelpViewController()
+    let nav = UINavigationController(rootViewController: viewController)
     AppTheme.applyNavigationBarAppearance(to: nav)
     nav.modalPresentationStyle = .pageSheet
     present(nav, animated: true)
@@ -94,13 +93,13 @@ extension MyViewController {
     do {
       let course = try ScormUtils.loadCourse(assetId: assetId)
 
-      let vc = ScormLessonListViewController(
+      let viewController = ScormLessonListViewController(
         assetId: course.assetId,
         scormDir: course.scormDir,
         manifest: course.manifest
       )
 
-      let nav = UINavigationController(rootViewController: vc)
+      let nav = UINavigationController(rootViewController: viewController)
       nav.modalPresentationStyle = .formSheet
       present(nav, animated: true)
     } catch {

@@ -27,10 +27,10 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
   }()
 
   private let logoImageView: UIImageView = {
-    let iv = UIImageView(image: UIImage(named: "MGLogo"))
-    iv.translatesAutoresizingMaskIntoConstraints = false
-    iv.contentMode = .scaleAspectFit
-    return iv
+    let imageView = UIImageView(image: UIImage(named: "MGLogo"))
+      imageView.translatesAutoresizingMaskIntoConstraints = false
+      imageView.contentMode = .scaleAspectFit
+    return imageView
   }()
 
   private let titleLabel: UILabel = {
@@ -57,7 +57,6 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
   private let listTitleLabel: UILabel = {
     let label = UILabel()
     label.translatesAutoresizingMaskIntoConstraints = false
-    //Can add a label here label.text = ""
     label.font = AppTheme.sectionTitleFont
     label.textColor = AppTheme.primaryTextColor
     return label

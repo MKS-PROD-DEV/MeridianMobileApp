@@ -3,7 +3,7 @@ import UIKit
 enum AppTheme {
   static var primaryColor: UIColor {
     switch AppConfiguration.branding {
-    case .mg:
+    case .meridian:
       return UIColor(red: 0 / 255, green: 131 / 255, blue: 203 / 255, alpha: 1.0)
     case .psi:
       return UIColor.systemGreen
@@ -94,7 +94,7 @@ enum AppTheme {
 
   static var logoImage: UIImage? {
     switch AppConfiguration.branding {
-    case .mg:
+    case .meridian:
       return UIImage(named: "MGLogo")
     case .psi:
       return UIImage(named: "PSILogo")
@@ -109,7 +109,7 @@ enum AppTheme {
 
   static var shortText: String {
     switch AppConfiguration.branding {
-    case .mg:
+    case .meridian:
       return "MG"
     case .psi:
       return "PSI"

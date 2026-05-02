@@ -41,9 +41,7 @@ final class ScormLessonListViewController: UITableViewController {
     manifest.scos.isEmpty ? "No lessons are available for this course." : nil
   }
 
-  override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath)
-    -> UITableViewCell
-  {
+  override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let sco = manifest.scos[indexPath.row]
     let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
 
@@ -67,7 +65,7 @@ final class ScormLessonListViewController: UITableViewController {
     let launchURL = URL(fileURLWithPath: sco.href, relativeTo: scormDir).standardizedFileURL
     let injectedJS = ScormAPIShim.javascript(assetId: assetId, scoId: sco.itemIdentifier)
 
-    let vc = ScormPlayerViewController(
+    let viewController = ScormPlayerViewController(
       assetId: assetId,
       scoId: sco.itemIdentifier,
       launchFileURL: launchURL,
@@ -75,7 +73,7 @@ final class ScormLessonListViewController: UITableViewController {
       injectedJS: injectedJS
     )
 
-    let nav = UINavigationController(rootViewController: vc)
+    let nav = UINavigationController(rootViewController: viewController)
     nav.modalPresentationStyle = .fullScreen
     present(nav, animated: true)
   }

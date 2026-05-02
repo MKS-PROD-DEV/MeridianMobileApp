@@ -1,7 +1,7 @@
 import Foundation
 
 enum Branding: String, CaseIterable {
-  case mg
+  case meridian
   case psi
   case adc
   case cov
@@ -9,7 +9,7 @@ enum Branding: String, CaseIterable {
 
   var displayName: String {
     switch self {
-    case .mg: return "MG"
+    case .meridian: return "MG"
     case .psi: return "PSI"
     case .adc: return "ADC"
     case .cov: return "COV"
@@ -19,7 +19,7 @@ enum Branding: String, CaseIterable {
 
   var fullName: String {
     switch self {
-    case .mg: return "Meridian Global"
+    case .meridian: return "Meridian Global"
     case .psi: return "PSI"
     case .adc: return "ADC"
     case .cov: return "COV"
@@ -29,7 +29,7 @@ enum Branding: String, CaseIterable {
 
   var hostDisplayName: String {
     switch self {
-    case .mg: return "sandbox7.mksi-lms.net"
+    case .meridian: return "sandbox7.mksi-lms.net"
     case .psi: return "psiadmin.mkscloud.com/support"
     case .adc: return "adc-admin.mkscloud.com"
     case .cov: return "covlc.virginia.gov"
@@ -39,7 +39,7 @@ enum Branding: String, CaseIterable {
 
   var launchURL: URL {
     switch self {
-    case .mg:
+    case .meridian:
       return URL(string: "https://sandbox7.mksi-lms.net")!
     case .psi:
       return URL(string: "https://psiadmin.mkscloud.com/support")!
@@ -67,7 +67,7 @@ enum AppConfiguration {
       guard let rawValue = UserDefaults.standard.string(forKey: brandingKey),
         let branding = Branding(rawValue: rawValue)
       else {
-        return .mg
+        return .meridian
       }
       return branding
     }

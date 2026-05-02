@@ -44,11 +44,11 @@ final class ScormUtils {
   }
 
   static func availableAssetIds() -> [String] {
-    let fm = FileManager.default
+    let fmanager = FileManager.default
     let root = assetsRootURL()
 
     guard
-      let items = try? fm.contentsOfDirectory(
+      let items = try? fmanager.contentsOfDirectory(
         at: root,
         includingPropertiesForKeys: [.isDirectoryKey],
         options: [.skipsHiddenFiles]
@@ -65,32 +65,32 @@ final class ScormUtils {
   }
 
   static func saveDownloadedZip(assetId: String, from sourceURL: URL) throws {
-    let fm = FileManager.default
+    let fmanager = FileManager.default
     let root = assetsRootURL()
     let assetDir = assetBaseURL(assetId: assetId)
     let destinationURL = assetDir.appendingPathComponent(sourceURL.lastPathComponent)
 
-    try fm.createDirectory(at: root, withIntermediateDirectories: true)
-    try fm.createDirectory(at: assetDir, withIntermediateDirectories: true)
+    try fmanager.createDirectory(at: root, withIntermediateDirectories: true)
+    try fmanager.createDirectory(at: assetDir, withIntermediateDirectories: true)
 
-    if fm.fileExists(atPath: destinationURL.path) {
-      try fm.removeItem(at: destinationURL)
+    if fmanager.fileExists(atPath: destinationURL.path) {
+      try fmanager.removeItem(at: destinationURL)
     }
 
-    try fm.copyItem(at: sourceURL, to: destinationURL)
+    try fmanager.copyItem(at: sourceURL, to: destinationURL)
   }
 
   static func replaceDownloadedZip(assetId: String, filename: String, data: Data) throws {
-    let fm = FileManager.default
+    let fmanager = FileManager.default
     let root = assetsRootURL()
     let assetDir = assetBaseURL(assetId: assetId)
     let destinationURL = assetDir.appendingPathComponent(filename)
 
-    try fm.createDirectory(at: root, withIntermediateDirectories: true)
-    try fm.createDirectory(at: assetDir, withIntermediateDirectories: true)
+    try fmanager.createDirectory(at: root, withIntermediateDirectories: true)
+    try fmanager.createDirectory(at: assetDir, withIntermediateDirectories: true)
 
-    if fm.fileExists(atPath: destinationURL.path) {
-      try fm.removeItem(at: destinationURL)
+    if fmanager.fileExists(atPath: destinationURL.path) {
+      try fmanager.removeItem(at: destinationURL)
     }
 
     try data.write(to: destinationURL, options: .atomic)
@@ -138,7 +138,7 @@ final class ScormUtils {
   }
 
   static func unzipIfNeeded(assetId: String) throws -> URL {
-    let fm = FileManager.default
+    let fmanager = FileManager.default
     let base = assetBaseURL(assetId: assetId)
 
     guard let zipURL = zipFileURL(in: base) else {
@@ -147,16 +147,16 @@ final class ScormUtils {
 
     let scormDir = base.appendingPathComponent("scorm", isDirectory: true)
 
-    if fm.fileExists(atPath: scormDir.path) {
+    if fmanager.fileExists(atPath: scormDir.path) {
       return scormDir
     }
 
-    try fm.createDirectory(at: scormDir, withIntermediateDirectories: true)
+    try fmanager.createDirectory(at: scormDir, withIntermediateDirectories: true)
 
     let archive = try Archive(url: zipURL, accessMode: .read)
     for entry in archive {
       let dest = scormDir.appendingPathComponent(entry.path)
-      try fm.createDirectory(
+      try fmanager.createDirectory(
         at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
       _ = try archive.extract(entry, to: dest)
     }
@@ -164,17 +164,16 @@ final class ScormUtils {
     return scormDir
   }
 
-  static func findManifestURL(scormDir: URL) -> URL? {
-    let fm = FileManager.default
-    if let e = fm.enumerator(at: scormDir, includingPropertiesForKeys: nil) {
-      for case let url as URL in e {
-        if url.lastPathComponent.lowercased() == "imsmanifest.xml" {
+    static func findManifestURL(scormDir: URL) -> URL? {
+      let fileManager = FileManager.default
+      if let enumerator = fileManager.enumerator(at: scormDir, includingPropertiesForKeys: nil) {
+        for case let url as URL in enumerator
+        where url.lastPathComponent.lowercased() == "imsmanifest.xml" {
           return url
         }
       }
+      return nil
     }
-    return nil
-  }
 
   static func parseManifest(manifestXML: String) -> ScormManifestData? {
     let parser = ManifestParser(xml: manifestXML)
@@ -186,10 +185,10 @@ final class ScormUtils {
   }
 
   private static func zipFileURL(in directory: URL) -> URL? {
-    let fm = FileManager.default
+    let fmanager = FileManager.default
 
     guard
-      let items = try? fm.contentsOfDirectory(
+      let items = try? fmanager.contentsOfDirectory(
         at: directory,
         includingPropertiesForKeys: [.isRegularFileKey],
         options: [.skipsHiddenFiles]
@@ -209,12 +208,12 @@ final class ScormUtils {
   }
 
   private static func buildCourseFileIndex(assetId: String, scormDir: URL) -> [CourseFileRecord] {
-    let fm = FileManager.default
+    let fmanager = FileManager.default
     let now = Date().timeIntervalSince1970
     var results: [CourseFileRecord] = []
 
     guard
-      let enumerator = fm.enumerator(
+      let enumerator = fmanager.enumerator(
         at: scormDir,
         includingPropertiesForKeys: [.isRegularFileKey, .fileSizeKey],
         options: [.skipsHiddenFiles]
@@ -267,8 +266,7 @@ final class ScormUtils {
     guard !ext.isEmpty else { return nil }
 
     if let type = UTType(filenameExtension: ext),
-      let mimeType = type.preferredMIMEType
-    {
+      let mimeType = type.preferredMIMEType {
       return mimeType
     }
 
@@ -277,166 +275,144 @@ final class ScormUtils {
 }
 
 private final class ManifestParser: NSObject, XMLParserDelegate {
-  private let data: Data
-
-  private var defaultOrganizationId: String?
-  private var currentOrganizationId: String?
-  private var currentResourceIdentifier: String?
-  private var currentResourceHref: String?
-
-  private var inOrganizations = false
-  private var inOrganization = false
-  private var inResources = false
-  private var inItem = false
-
-  private var currentText = ""
-
-  private struct ItemNode {
-    let identifier: String
-    let identifierRef: String?
-    var title: String
-    let organizationId: String
-  }
-
-  private var manifestTitle: String?
-  private var currentItem: ItemNode?
-  private var items: [ItemNode] = []
-  private var resourceHrefByIdentifier: [String: String] = [:]
-
-  init(xml: String) {
-    self.data = Data(xml.utf8)
-  }
-
-  func parse() -> ScormManifestData? {
-    let parser = XMLParser(data: data)
-    parser.delegate = self
-    guard parser.parse() else { return nil }
-
-    let chosenOrgId = defaultOrganizationId ?? items.first?.organizationId
-    let chosenItems = items.filter { $0.organizationId == chosenOrgId }
-
-    let scos: [ScormSco] = chosenItems.compactMap { item in
-      guard let identifierRef = item.identifierRef,
-        let href = resourceHrefByIdentifier[identifierRef]
-      else {
-        return nil
-      }
-
-      return ScormSco(
-        itemIdentifier: item.identifier,
-        resourceIdentifier: identifierRef,
-        title: item.title.isEmpty ? item.identifier : item.title,
-        href: href
-      )
+    private let data: Data
+    private var defaultOrganizationId: String?
+    private var currentOrganizationId: String?
+    private var currentResourceIdentifier: String?
+    private var currentResourceHref: String?
+    private var inOrganizations = false
+    private var inOrganization = false
+    private var inResources = false
+    private var inItem = false
+    private var currentText = ""
+    private struct ItemNode {
+        let identifier: String
+        let identifierRef: String?
+        var title: String
+        let organizationId: String
     }
-
-    return ScormManifestData(
-      title: manifestTitle,
-      scos: scos
-    )
-  }
-
-  func parser(
-    _ parser: XMLParser,
-    didStartElement elementName: String,
-    namespaceURI: String?,
-    qualifiedName qName: String?,
-    attributes attributeDict: [String: String] = [:]
-  ) {
-    let name = qName ?? elementName
-    currentText = ""
-
-    switch name {
-    case "organizations":
-      inOrganizations = true
-      defaultOrganizationId = attributeDict["default"]
-
-    case "organization":
-      inOrganization = true
-      currentOrganizationId = attributeDict["identifier"]
-
-    case "item":
-      if inOrganization, let orgId = currentOrganizationId,
-        let identifier = attributeDict["identifier"]
-      {
-        inItem = true
-        currentItem = ItemNode(
-          identifier: identifier,
-          identifierRef: attributeDict["identifierref"],
-          title: "",
-          organizationId: orgId
+    private var manifestTitle: String?
+    private var currentItem: ItemNode?
+    private var items: [ItemNode] = []
+    private var resourceHrefByIdentifier: [String: String] = [:]
+    init(xml: String) {
+        self.data = Data(xml.utf8)
+    }
+    func parse() -> ScormManifestData? {
+        let parser = XMLParser(data: data)
+        parser.delegate = self
+        guard parser.parse() else { return nil }
+        let chosenOrgId = defaultOrganizationId ?? items.first?.organizationId
+        let chosenItems = items.filter { $0.organizationId == chosenOrgId }
+        let scos: [ScormSco] = chosenItems.compactMap { item in
+            guard let identifierRef = item.identifierRef,
+                  let href = resourceHrefByIdentifier[identifierRef]
+            else {
+                return nil
+            }
+            return ScormSco(
+                itemIdentifier: item.identifier,
+                resourceIdentifier: identifierRef,
+                title: item.title.isEmpty ? item.identifier : item.title,
+                href: href
+            )
+        }
+        return ScormManifestData(
+            title: manifestTitle,
+            scos: scos
         )
-      }
-
-    case "resources":
-      inResources = true
-
-    case "resource":
-      if inResources {
-        currentResourceIdentifier = attributeDict["identifier"]
-        currentResourceHref = attributeDict["href"]
-      }
-
-    default:
-      break
     }
-  }
-
-  func parser(_ parser: XMLParser, foundCharacters string: String) {
-    currentText += string
-  }
-
-  func parser(
-    _ parser: XMLParser,
-    didEndElement elementName: String,
-    namespaceURI: String?,
-    qualifiedName qName: String?
-  ) {
-    let name = qName ?? elementName
-    let text = currentText.trimmingCharacters(in: .whitespacesAndNewlines)
-
-    switch name {
-    case "title":
-      if inItem, var item = currentItem, !text.isEmpty {
-        item = ItemNode(
-          identifier: item.identifier,
-          identifierRef: item.identifierRef,
-          title: text,
-          organizationId: item.organizationId
-        )
-        currentItem = item
-      } else if inOrganization && manifestTitle == nil && !text.isEmpty {
-        manifestTitle = text
-      }
-
-    case "item":
-      if let item = currentItem {
-        items.append(item)
-      }
-      currentItem = nil
-      inItem = false
-
-    case "resource":
-      if let id = currentResourceIdentifier, let href = currentResourceHref {
-        resourceHrefByIdentifier[id] = href
-      }
-      currentResourceIdentifier = nil
-      currentResourceHref = nil
-
-    case "organization":
-      inOrganization = false
-      currentOrganizationId = nil
-
-    case "organizations":
-      inOrganizations = false
-
-    case "resources":
-      inResources = false
-
-    default:
-      break
+    func parser(
+        _ parser: XMLParser,
+        didStartElement elementName: String,
+        namespaceURI: String?,
+        qualifiedName qName: String?,
+        attributes attributeDict: [String: String] = [:]
+    ) {
+        let name = qName ?? elementName
+        currentText = ""
+        switch name {
+        case "organizations":
+            inOrganizations = true
+            defaultOrganizationId = attributeDict["default"]
+        case "organization":
+            inOrganization = true
+            currentOrganizationId = attributeDict["identifier"]
+        case "item":
+            if inOrganization, let orgId = currentOrganizationId,
+               let identifier = attributeDict["identifier"] {
+                inItem = true
+                currentItem = ItemNode(
+                    identifier: identifier,
+                    identifierRef: attributeDict["identifierref"],
+                    title: "",
+                    organizationId: orgId
+                )
+            }
+        case "resources":
+            inResources = true
+        case "resource":
+            if inResources {
+                currentResourceIdentifier = attributeDict["identifier"]
+                currentResourceHref = attributeDict["href"]
+            }
+        default:
+            break
+        }
     }
-
-    currentText = ""
-  }
+    func parser(_ parser: XMLParser, foundCharacters string: String) {
+        currentText += string
+    }
+    func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
+        let name = qName ?? elementName
+        let text = currentText.trimmingCharacters(in: .whitespacesAndNewlines)
+        switch name {
+        case "title":
+            handleEndTitle(text)
+        case "item":
+            handleEndItem()
+        case "resource":
+            handleEndResource()
+        case "organization":
+            handleEndOrganization()
+        case "organizations":
+            inOrganizations = false
+        case "resources":
+            inResources = false
+        default:
+            break
+        }
+        currentText = ""
+    }
+    private func handleEndTitle(_ text: String) {
+        if inItem, var item = currentItem, !text.isEmpty {
+            item = ItemNode(
+                identifier: item.identifier,
+                identifierRef: item.identifierRef,
+                title: text,
+                organizationId: item.organizationId
+            )
+            currentItem = item
+        } else if inOrganization, manifestTitle == nil, !text.isEmpty {
+            manifestTitle = text
+        }
+    }
+    private func handleEndItem() {
+        if let item = currentItem {
+            items.append(item)
+        }
+        currentItem = nil
+        inItem = false
+    }
+    private func handleEndResource() {
+        if let id = currentResourceIdentifier, let href = currentResourceHref {
+            resourceHrefByIdentifier[id] = href
+        }
+        currentResourceIdentifier = nil
+        currentResourceHref = nil
+    }
+    private func handleEndOrganization() {
+        inOrganization = false
+        currentOrganizationId = nil
+    }
 }

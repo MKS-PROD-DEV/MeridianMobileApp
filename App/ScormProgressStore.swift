@@ -25,7 +25,7 @@ struct CourseFileRecord {
 final class ScormProgressStore {
   static let shared = ScormProgressStore()
 
-  private var db: OpaquePointer?
+  private var database: OpaquePointer?
 
   private init() {
     openDatabase()
@@ -34,8 +34,8 @@ final class ScormProgressStore {
   }
 
   deinit {
-    if db != nil {
-      sqlite3_close(db)
+    if database != nil {
+      sqlite3_close(database)
     }
   }
 
@@ -48,67 +48,22 @@ final class ScormProgressStore {
     let path = databaseURL().path
     print("SQLite DB path:", path)
 
-    if sqlite3_open(path, &db) != SQLITE_OK {
-      print("SQLite open error:", String(cString: sqlite3_errmsg(db)))
+    if sqlite3_open(path, &database) != SQLITE_OK {
+      print("SQLite open error:", String(cString: sqlite3_errmsg(database)))
     }
   }
 
   private func createTablesIfNeeded() {
-    let scoProgressSQL = """
-      CREATE TABLE IF NOT EXISTS sco_progress (
-        asset_id TEXT NOT NULL,
-        sco_id TEXT NOT NULL,
-        cmi_json TEXT NOT NULL,
-        updated_at REAL NOT NULL,
-        sync_status TEXT NOT NULL DEFAULT 'pending',
-        last_synced_at REAL,
-        sync_error TEXT,
-        PRIMARY KEY (asset_id, sco_id)
-      );
-      """
+    createTable(sql: ScormProgressStoreSQL.createScoProgressTable, name: "sco_progress")
+    createTable(sql: ScormProgressStoreSQL.createDownloadedCoursesTable, name: "downloaded_courses")
+    createTable(sql: ScormProgressStoreSQL.createCourseFilesTable, name: "course_files")
+  }
 
-    if sqlite3_exec(db, scoProgressSQL, nil, nil, nil) != SQLITE_OK {
-      print("SQLite create table error (sco_progress):", String(cString: sqlite3_errmsg(db)))
+  private func createTable(sql: String, name: String) {
+    if sqlite3_exec(database, sql, nil, nil, nil) != SQLITE_OK {
+      print("SQLite create table error (\(name)):", String(cString: sqlite3_errmsg(database)))
     } else {
-      print("SQLite table ready: sco_progress")
-    }
-
-    let downloadedCoursesSQL = """
-      CREATE TABLE IF NOT EXISTS downloaded_courses (
-        asset_id TEXT PRIMARY KEY NOT NULL,
-        title TEXT NOT NULL,
-        scorm_dir_path TEXT NOT NULL,
-        manifest_title TEXT,
-        sco_count INTEGER NOT NULL DEFAULT 0,
-        download_status TEXT NOT NULL DEFAULT 'downloaded',
-        created_at REAL NOT NULL,
-        updated_at REAL NOT NULL
-      );
-      """
-
-    if sqlite3_exec(db, downloadedCoursesSQL, nil, nil, nil) != SQLITE_OK {
-      print("SQLite create table error (downloaded_courses):", String(cString: sqlite3_errmsg(db)))
-    } else {
-      print("SQLite table ready: downloaded_courses")
-    }
-
-    let courseFilesSQL = """
-      CREATE TABLE IF NOT EXISTS course_files (
-        asset_id TEXT NOT NULL,
-        relative_path TEXT NOT NULL,
-        absolute_path TEXT NOT NULL,
-        mime_type TEXT,
-        size_bytes INTEGER NOT NULL DEFAULT 0,
-        created_at REAL NOT NULL,
-        updated_at REAL NOT NULL,
-        PRIMARY KEY (asset_id, relative_path)
-      );
-      """
-
-    if sqlite3_exec(db, courseFilesSQL, nil, nil, nil) != SQLITE_OK {
-      print("SQLite create table error (course_files):", String(cString: sqlite3_errmsg(db)))
-    } else {
-      print("SQLite table ready: course_files")
+      print("SQLite table ready:", name)
     }
   }
 
@@ -135,20 +90,25 @@ final class ScormProgressStore {
   private func addColumnIfNeeded(table: String, column: String, definition: String) {
     guard !tableHasColumn(table: table, column: column) else { return }
 
-    let sql = "ALTER TABLE \(table) ADD COLUMN \(column) \(definition);"
-    if sqlite3_exec(db, sql, nil, nil, nil) != SQLITE_OK {
-      print("SQLite alter table error (\(table).\(column)):", String(cString: sqlite3_errmsg(db)))
+    let sql = ScormProgressStoreSQL.alterTableAddColumn(
+      table: table,
+      column: column,
+      definition: definition
+    )
+
+    if sqlite3_exec(database, sql, nil, nil, nil) != SQLITE_OK {
+      print("SQLite alter table error (\(table).\(column)):", String(cString: sqlite3_errmsg(database)))
     } else {
       print("SQLite added column:", "\(table).\(column)")
     }
   }
 
   private func tableHasColumn(table: String, column: String) -> Bool {
-    let sql = "PRAGMA table_info(\(table));"
+    let sql = ScormProgressStoreSQL.pragmaTableInfo(table: table)
     var statement: OpaquePointer?
 
-    guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else {
-      print("SQLite pragma prepare error:", String(cString: sqlite3_errmsg(db)))
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      print("SQLite pragma prepare error:", String(cString: sqlite3_errmsg(database)))
       return false
     }
 
@@ -169,17 +129,11 @@ final class ScormProgressStore {
   func loadCMI(assetId: String, scoId: String) -> String? {
     print("SQLite load request:", assetId, scoId)
 
-    let sql = """
-      SELECT cmi_json
-      FROM sco_progress
-      WHERE asset_id = ? AND sco_id = ?
-      LIMIT 1;
-      """
-
+    let sql = ScormProgressStoreSQL.loadCMI
     var statement: OpaquePointer?
 
-    guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else {
-      print("SQLite prepare load error:", String(cString: sqlite3_errmsg(db)))
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      print("SQLite prepare load error:", String(cString: sqlite3_errmsg(database)))
       return nil
     }
 
@@ -189,8 +143,7 @@ final class ScormProgressStore {
     sqlite3_bind_text(statement, 2, (scoId as NSString).utf8String, -1, nil)
 
     if sqlite3_step(statement) == SQLITE_ROW,
-      let cString = sqlite3_column_text(statement, 0)
-    {
+      let cString = sqlite3_column_text(statement, 0) {
       print("SQLite load hit:", assetId, scoId)
       return String(cString: cString)
     }
@@ -202,22 +155,11 @@ final class ScormProgressStore {
   func saveCMI(assetId: String, scoId: String, cmiJSON: String) {
     print("SQLite save request:", assetId, scoId)
 
-    let sql = """
-      INSERT INTO sco_progress (asset_id, sco_id, cmi_json, updated_at, sync_status, last_synced_at, sync_error)
-      VALUES (?, ?, ?, ?, 'pending', NULL, NULL)
-      ON CONFLICT(asset_id, sco_id)
-      DO UPDATE SET
-        cmi_json = excluded.cmi_json,
-        updated_at = excluded.updated_at,
-        sync_status = 'pending',
-        last_synced_at = NULL,
-        sync_error = NULL;
-      """
-
+    let sql = ScormProgressStoreSQL.saveCMI
     var statement: OpaquePointer?
 
-    guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else {
-      print("SQLite prepare save error:", String(cString: sqlite3_errmsg(db)))
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      print("SQLite prepare save error:", String(cString: sqlite3_errmsg(database)))
       return
     }
 
@@ -229,25 +171,18 @@ final class ScormProgressStore {
     sqlite3_bind_double(statement, 4, Date().timeIntervalSince1970)
 
     if sqlite3_step(statement) != SQLITE_DONE {
-      print("SQLite save error:", String(cString: sqlite3_errmsg(db)))
+      print("SQLite save error:", String(cString: sqlite3_errmsg(database)))
     } else {
       print("SQLite save success:", assetId, scoId)
     }
   }
 
   func markCMISynced(assetId: String, scoId: String) {
-    let sql = """
-      UPDATE sco_progress
-      SET sync_status = 'synced',
-          last_synced_at = ?,
-          sync_error = NULL
-      WHERE asset_id = ? AND sco_id = ?;
-      """
-
+    let sql = ScormProgressStoreSQL.markCMISynced
     var statement: OpaquePointer?
 
-    guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else {
-      print("SQLite prepare mark synced error:", String(cString: sqlite3_errmsg(db)))
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      print("SQLite prepare mark synced error:", String(cString: sqlite3_errmsg(database)))
       return
     }
 
@@ -258,22 +193,16 @@ final class ScormProgressStore {
     sqlite3_bind_text(statement, 3, (scoId as NSString).utf8String, -1, nil)
 
     if sqlite3_step(statement) != SQLITE_DONE {
-      print("SQLite mark synced error:", String(cString: sqlite3_errmsg(db)))
+      print("SQLite mark synced error:", String(cString: sqlite3_errmsg(database)))
     }
   }
 
   func markCMISyncFailed(assetId: String, scoId: String, errorMessage: String) {
-    let sql = """
-      UPDATE sco_progress
-      SET sync_status = 'failed',
-          sync_error = ?
-      WHERE asset_id = ? AND sco_id = ?;
-      """
-
+    let sql = ScormProgressStoreSQL.markCMISyncFailed
     var statement: OpaquePointer?
 
-    guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else {
-      print("SQLite prepare mark failed error:", String(cString: sqlite3_errmsg(db)))
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      print("SQLite prepare mark failed error:", String(cString: sqlite3_errmsg(database)))
       return
     }
 
@@ -284,7 +213,7 @@ final class ScormProgressStore {
     sqlite3_bind_text(statement, 3, (scoId as NSString).utf8String, -1, nil)
 
     if sqlite3_step(statement) != SQLITE_DONE {
-      print("SQLite mark failed error:", String(cString: sqlite3_errmsg(db)))
+      print("SQLite mark failed error:", String(cString: sqlite3_errmsg(database)))
     }
   }
 
@@ -297,26 +226,11 @@ final class ScormProgressStore {
     downloadStatus: String = "downloaded"
   ) {
     let now = Date().timeIntervalSince1970
-
-    let sql = """
-      INSERT INTO downloaded_courses (
-        asset_id, title, scorm_dir_path, manifest_title, sco_count, download_status, created_at, updated_at
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(asset_id)
-      DO UPDATE SET
-        title = excluded.title,
-        scorm_dir_path = excluded.scorm_dir_path,
-        manifest_title = excluded.manifest_title,
-        sco_count = excluded.sco_count,
-        download_status = excluded.download_status,
-        updated_at = excluded.updated_at;
-      """
-
+    let sql = ScormProgressStoreSQL.saveDownloadedCourse
     var statement: OpaquePointer?
 
-    guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else {
-      print("SQLite prepare save downloaded course error:", String(cString: sqlite3_errmsg(db)))
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      print("SQLite prepare save downloaded course error:", String(cString: sqlite3_errmsg(database)))
       return
     }
 
@@ -338,7 +252,7 @@ final class ScormProgressStore {
     sqlite3_bind_double(statement, 8, now)
 
     if sqlite3_step(statement) != SQLITE_DONE {
-      print("SQLite save downloaded course error:", String(cString: sqlite3_errmsg(db)))
+      print("SQLite save downloaded course error:", String(cString: sqlite3_errmsg(database)))
     } else {
       print("SQLite save downloaded course success:", assetId)
     }
@@ -347,17 +261,11 @@ final class ScormProgressStore {
   func replaceCourseFiles(assetId: String, files: [CourseFileRecord]) {
     deleteCourseFiles(assetId: assetId)
 
-    let sql = """
-      INSERT INTO course_files (
-        asset_id, relative_path, absolute_path, mime_type, size_bytes, created_at, updated_at
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?);
-      """
-
+    let sql = ScormProgressStoreSQL.replaceCourseFile
     var statement: OpaquePointer?
 
-    guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else {
-      print("SQLite prepare replace course files error:", String(cString: sqlite3_errmsg(db)))
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      print("SQLite prepare replace course files error:", String(cString: sqlite3_errmsg(database)))
       return
     }
 
@@ -382,7 +290,7 @@ final class ScormProgressStore {
       sqlite3_bind_double(statement, 7, file.updatedAt)
 
       if sqlite3_step(statement) != SQLITE_DONE {
-        print("SQLite insert course file error:", String(cString: sqlite3_errmsg(db)))
+        print("SQLite insert course file error:", String(cString: sqlite3_errmsg(database)))
       }
     }
 
@@ -390,17 +298,12 @@ final class ScormProgressStore {
   }
 
   func loadDownloadedCourses() -> [DownloadedCourseRecord] {
-    let sql = """
-      SELECT asset_id, title, scorm_dir_path, manifest_title, sco_count, download_status, created_at, updated_at
-      FROM downloaded_courses
-      ORDER BY updated_at DESC;
-      """
-
+    let sql = ScormProgressStoreSQL.loadDownloadedCourses
     var statement: OpaquePointer?
     var results: [DownloadedCourseRecord] = []
 
-    guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else {
-      print("SQLite prepare load downloaded courses error:", String(cString: sqlite3_errmsg(db)))
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      print("SQLite prepare load downloaded courses error:", String(cString: sqlite3_errmsg(database)))
       return []
     }
 
@@ -441,18 +344,12 @@ final class ScormProgressStore {
   }
 
   func loadCourseFiles(assetId: String) -> [CourseFileRecord] {
-    let sql = """
-      SELECT asset_id, relative_path, absolute_path, mime_type, size_bytes, created_at, updated_at
-      FROM course_files
-      WHERE asset_id = ?
-      ORDER BY relative_path ASC;
-      """
-
+    let sql = ScormProgressStoreSQL.loadCourseFiles
     var statement: OpaquePointer?
     var results: [CourseFileRecord] = []
 
-    guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else {
-      print("SQLite prepare load course files error:", String(cString: sqlite3_errmsg(db)))
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      print("SQLite prepare load course files error:", String(cString: sqlite3_errmsg(database)))
       return []
     }
 
@@ -493,11 +390,11 @@ final class ScormProgressStore {
   }
 
   func deleteDownloadedCourse(assetId: String) {
-    let sql = "DELETE FROM downloaded_courses WHERE asset_id = ?;"
+    let sql = ScormProgressStoreSQL.deleteDownloadedCourse(assetId: assetId)
     var statement: OpaquePointer?
 
-    guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else {
-      print("SQLite prepare delete downloaded course error:", String(cString: sqlite3_errmsg(db)))
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      print("SQLite prepare delete downloaded course error:", String(cString: sqlite3_errmsg(database)))
       return
     }
 
@@ -506,16 +403,16 @@ final class ScormProgressStore {
     sqlite3_bind_text(statement, 1, (assetId as NSString).utf8String, -1, nil)
 
     if sqlite3_step(statement) != SQLITE_DONE {
-      print("SQLite delete downloaded course error:", String(cString: sqlite3_errmsg(db)))
+      print("SQLite delete downloaded course error:", String(cString: sqlite3_errmsg(database)))
     }
   }
 
   func deleteCourseFiles(assetId: String) {
-    let sql = "DELETE FROM course_files WHERE asset_id = ?;"
+    let sql = ScormProgressStoreSQL.deleteCourseFiles(assetId: assetId)
     var statement: OpaquePointer?
 
-    guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else {
-      print("SQLite prepare delete course files error:", String(cString: sqlite3_errmsg(db)))
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      print("SQLite prepare delete course files error:", String(cString: sqlite3_errmsg(database)))
       return
     }
 
@@ -524,22 +421,17 @@ final class ScormProgressStore {
     sqlite3_bind_text(statement, 1, (assetId as NSString).utf8String, -1, nil)
 
     if sqlite3_step(statement) != SQLITE_DONE {
-      print("SQLite delete course files error:", String(cString: sqlite3_errmsg(db)))
+      print("SQLite delete course files error:", String(cString: sqlite3_errmsg(database)))
     }
   }
 
   func clearAll() {
     print("SQLite clear all")
 
-    let sqlStatements = [
-      "DELETE FROM sco_progress;",
-      "DELETE FROM downloaded_courses;",
-      "DELETE FROM course_files;",
-    ]
-
-    for sql in sqlStatements {
-      if sqlite3_exec(db, sql, nil, nil, nil) != SQLITE_OK {
-        print("SQLite clear error:", String(cString: sqlite3_errmsg(db)))
+    for sql in ScormProgressStoreSQL.clearAllStatements {
+      let result = sqlite3_exec(database, sql, nil, nil, nil)
+      if result != SQLITE_OK {
+        print("SQLite clear error:", String(cString: sqlite3_errmsg(database)))
       }
     }
   }

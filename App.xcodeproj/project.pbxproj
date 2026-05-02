@@ -22,6 +22,7 @@
 		C560F12C2FA66AF600CE823A /* StartupOffline.swift in Sources */ = {isa = PBXBuildFile; fileRef = C560F12B2FA66AF200CE823A /* StartupOffline.swift */; };
 		C560F12E2FA66B0100CE823A /* BrandingPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C560F12D2FA66AFE00CE823A /* BrandingPresentation.swift */; };
 		C560F1302FA66B0D00CE823A /* WebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C560F12F2FA66B0900CE823A /* WebView.swift */; };
+		C560F13A2FA67FFA00CE823A /* ScormProgressStoreSQL.swift in Sources */ = {isa = PBXBuildFile; fileRef = C560F1392FA67FF500CE823A /* ScormProgressStoreSQL.swift */; };
 		C5B80EF52FA545E300356637 /* InitialSiteSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5B80EF42FA545DF00356637 /* InitialSiteSelectionViewController.swift */; };
 		C5EE1A1E2FA23F9C00D7DBBF /* MyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5EE1A1D2FA23F9C00D7DBBF /* MyViewController.swift */; };
 		C5EE1A202FA27D1800D7DBBF /* nativeAssetStore.js in Resources */ = {isa = PBXBuildFile; fileRef = C5EE1A1F2FA27D1800D7DBBF /* nativeAssetStore.js */; };
@@ -54,6 +55,7 @@
 		C560F12B2FA66AF200CE823A /* StartupOffline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartupOffline.swift; sourceTree = "<group>"; };
 		C560F12D2FA66AFE00CE823A /* BrandingPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandingPresentation.swift; sourceTree = "<group>"; };
 		C560F12F2FA66B0900CE823A /* WebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebView.swift; sourceTree = "<group>"; };
+		C560F1392FA67FF500CE823A /* ScormProgressStoreSQL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScormProgressStoreSQL.swift; sourceTree = "<group>"; };
 		C5B80EF42FA545DF00356637 /* InitialSiteSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitialSiteSelectionViewController.swift; sourceTree = "<group>"; };
 		C5EE1A1D2FA23F9C00D7DBBF /* MyViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyViewController.swift; sourceTree = "<group>"; };
 		C5EE1A1F2FA27D1800D7DBBF /* nativeAssetStore.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = nativeAssetStore.js; sourceTree = "<group>"; };
@@ -100,6 +102,7 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				C560F1392FA67FF500CE823A /* ScormProgressStoreSQL.swift */,
 				C560F12F2FA66B0900CE823A /* WebView.swift */,
 				C560F12D2FA66AFE00CE823A /* BrandingPresentation.swift */,
 				C560F12B2FA66AF200CE823A /* StartupOffline.swift */,
@@ -140,6 +143,7 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
+				C560F1382FA67AF500CE823A /* SwiftLint */,
 			);
 			buildRules = (
 			);
@@ -210,6 +214,30 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		C560F1382FA67AF500CE823A /* SwiftLint */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.swiftlint.yaml",
+				"$(SRCROOT)/App",
+			);
+			name = SwiftLint;
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ -x /opt/homebrew/bin/swiftlint ]; then\n  /opt/homebrew/bin/swiftlint --config \"${SRCROOT}/.swiftlint.yaml\"\nelse\n  echo \"warning: SwiftLint not installed\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		504EC3001FED79650016851F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -227,6 +255,7 @@
 				C5102DA52FA4E391003F63AC /* AppConfiguration.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				C560F12A2FA66AE900CE823A /* FloatingMenu.swift in Sources */,
+				C560F13A2FA67FFA00CE823A /* ScormProgressStoreSQL.swift in Sources */,
 				C5EE1A292FA2A43100D7DBBF /* ScormAPIShim.swift in Sources */,
 				C5EE1A2B2FA2C3E500D7DBBF /* ScormLessonListViewController.swift in Sources */,
 				C5EE1A2F2FA2CD6200D7DBBF /* SettingsViewController.swift in Sources */,
@@ -388,6 +417,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -410,6 +440,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (

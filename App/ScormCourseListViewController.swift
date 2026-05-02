@@ -72,11 +72,11 @@ final class ScormCourseListViewController: UITableViewController {
     tableView.deselectRow(at: indexPath, animated: true)
 
     let course = courses[indexPath.row]
-    let vc = ScormLessonListViewController(
+    let viewController = ScormLessonListViewController(
       assetId: course.assetId,
       scormDir: course.scormDir,
       manifest: course.manifest
     )
-    navigationController?.pushViewController(vc, animated: true)
+    navigationController?.pushViewController(viewController, animated: true)
   }
 }

@@ -1,0 +1,17 @@
+lenient: true
+
+line_length:
+  warning: 250
+  error: 300
+
+file_length:
+  warning: 1500
+  error: 1750
+
+type_body_length:
+  warning: 400
+  error: 500
+
+function_body_length:
+  warning: 450
+  error: 500
