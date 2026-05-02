@@ -169,33 +169,76 @@ extension MyViewController {
     }
   }
 
-  func showOnlineState(reloadWebView: Bool = true) {
-    isShowingOfflineMode = false
-    isShowingConnectivityAlert = false
-    startupLogoButton.isUserInteractionEnabled = false
-    floatingMenuButton.isHidden = false
+    func showReturningOnlineLoadingState() {
+      startupOverlay.alpha = 1
+      view.bringSubviewToFront(startupOverlay)
 
-    if let webView = self.webView {
-      webView.isHidden = false
-      view.sendSubviewToBack(webView)
+      loadingTrackView.isHidden = false
+      loadingStatusLabel.isHidden = false
+      loadingTrackView.alpha = 1
+      loadingStatusLabel.alpha = 1
 
-      if reloadWebView {
-        isWaitingForInitialSiteLoad = true
-        loadingStatusLabel.text = "Preparing site..."
-        loadingTrackView.isHidden = false
-        loadingStatusLabel.isHidden = false
-        loadingTrackView.alpha = 1
-        loadingStatusLabel.alpha = 1
-        startupOverlay.alpha = 1
-        view.bringSubviewToFront(startupOverlay)
+      offlineTitleLabel.alpha = 0
+      offlineHelpButton.alpha = 0
+      offlineGoOnlineButton.alpha = 0
+      offlineSettingsButton.alpha = 0
+      offlineCoursesContainerView.alpha = 0
 
-        webView.load(URLRequest(url: AppConfiguration.launchURL))
-      } else {
-        didShowInitialWebContent = true
-        completeStartupOverlayDismissalIfNeeded()
+      loadingFillWidthConstraint?.constant = 0
+      startupOverlay.layoutIfNeeded()
+
+      loadingStatusLabel.text = "Checking network..."
+      animateLoadingBar(to: 0.45, duration: 0.35)
+
+      UIView.animate(withDuration: 0.2) {
+        self.offlineTitleLabel.alpha = 0
+        self.offlineHelpButton.alpha = 0
+        self.offlineGoOnlineButton.alpha = 0
+        self.offlineSettingsButton.alpha = 0
+        self.offlineCoursesContainerView.alpha = 0
+      }
+
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+        guard let self = self else { return }
+        self.loadingStatusLabel.text = "Preparing site..."
+        self.animateLoadingBar(to: 0.9, duration: 0.45)
       }
     }
-  }
+
+    func showOnlineState(reloadWebView: Bool = true) {
+      let isReturningFromOfflineMode = isShowingOfflineMode
+
+      isShowingOfflineMode = false
+      isShowingConnectivityAlert = false
+      startupLogoButton.isUserInteractionEnabled = false
+      floatingMenuButton.isHidden = false
+
+      if let webView = self.webView {
+        webView.isHidden = false
+        view.sendSubviewToBack(webView)
+
+        if reloadWebView {
+          isWaitingForInitialSiteLoad = true
+
+          if isReturningFromOfflineMode {
+            showReturningOnlineLoadingState()
+          } else {
+            loadingStatusLabel.text = "Preparing site..."
+            loadingTrackView.isHidden = false
+            loadingStatusLabel.isHidden = false
+            loadingTrackView.alpha = 1
+            loadingStatusLabel.alpha = 1
+            startupOverlay.alpha = 1
+            view.bringSubviewToFront(startupOverlay)
+          }
+
+          webView.load(URLRequest(url: AppConfiguration.launchURL))
+        } else {
+          didShowInitialWebContent = true
+          completeStartupOverlayDismissalIfNeeded()
+        }
+      }
+    }
 
   func showOfflineState() {
     isShowingOfflineMode = true
