@@ -186,7 +186,8 @@ final class SettingsViewController: UITableViewController {
       confirmClearAllDownloadedContent()
 
     case .support:
-      showReportBugPlaceholder()
+      let controller = UINavigationController(rootViewController: ReportBugViewController())
+      present(controller, animated: true)
     }
   }
 

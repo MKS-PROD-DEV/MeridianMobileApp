@@ -23,6 +23,7 @@
 		C560F12E2FA66B0100CE823A /* BrandingPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C560F12D2FA66AFE00CE823A /* BrandingPresentation.swift */; };
 		C560F1302FA66B0D00CE823A /* WebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C560F12F2FA66B0900CE823A /* WebView.swift */; };
 		C560F13A2FA67FFA00CE823A /* ScormProgressStoreSQL.swift in Sources */ = {isa = PBXBuildFile; fileRef = C560F1392FA67FF500CE823A /* ScormProgressStoreSQL.swift */; };
+		C560F13C2FA685B500CE823A /* ReportBugViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C560F13B2FA685B200CE823A /* ReportBugViewController.swift */; };
 		C5B80EF52FA545E300356637 /* InitialSiteSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5B80EF42FA545DF00356637 /* InitialSiteSelectionViewController.swift */; };
 		C5EE1A1E2FA23F9C00D7DBBF /* MyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5EE1A1D2FA23F9C00D7DBBF /* MyViewController.swift */; };
 		C5EE1A202FA27D1800D7DBBF /* nativeAssetStore.js in Resources */ = {isa = PBXBuildFile; fileRef = C5EE1A1F2FA27D1800D7DBBF /* nativeAssetStore.js */; };
@@ -56,6 +57,7 @@
 		C560F12D2FA66AFE00CE823A /* BrandingPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandingPresentation.swift; sourceTree = "<group>"; };
 		C560F12F2FA66B0900CE823A /* WebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebView.swift; sourceTree = "<group>"; };
 		C560F1392FA67FF500CE823A /* ScormProgressStoreSQL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScormProgressStoreSQL.swift; sourceTree = "<group>"; };
+		C560F13B2FA685B200CE823A /* ReportBugViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportBugViewController.swift; sourceTree = "<group>"; };
 		C5B80EF42FA545DF00356637 /* InitialSiteSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitialSiteSelectionViewController.swift; sourceTree = "<group>"; };
 		C5EE1A1D2FA23F9C00D7DBBF /* MyViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyViewController.swift; sourceTree = "<group>"; };
 		C5EE1A1F2FA27D1800D7DBBF /* nativeAssetStore.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = nativeAssetStore.js; sourceTree = "<group>"; };
@@ -102,6 +104,7 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				C560F13B2FA685B200CE823A /* ReportBugViewController.swift */,
 				C560F1392FA67FF500CE823A /* ScormProgressStoreSQL.swift */,
 				C560F12F2FA66B0900CE823A /* WebView.swift */,
 				C560F12D2FA66AFE00CE823A /* BrandingPresentation.swift */,
@@ -248,6 +251,7 @@
 				C5102DA32FA4187F003F63AC /* Authenticator.swift in Sources */,
 				C5EE1A252FA2A3C900D7DBBF /* ScormPlayerViewController.swift in Sources */,
 				C5102DA72FA4E8BB003F63AC /* AppTheme.swift in Sources */,
+				C560F13C2FA685B500CE823A /* ReportBugViewController.swift in Sources */,
 				C560F12C2FA66AF600CE823A /* StartupOffline.swift in Sources */,
 				C5EE1A1E2FA23F9C00D7DBBF /* MyViewController.swift in Sources */,
 				C5EE1A2D2FA2C81500D7DBBF /* ScormCourseListViewController.swift in Sources */,
