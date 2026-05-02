@@ -177,7 +177,7 @@ final class SettingsViewController: UITableViewController {
 
     switch section {
     case .organization:
-      showSitePicker()
+      showOrganizationPicker()
 
     case .preferences:
       break
@@ -191,31 +191,23 @@ final class SettingsViewController: UITableViewController {
     }
   }
 
-  private func showSitePicker() {
-    let alert = UIAlertController(
-      title: "Choose Organization",
-      message: nil,
-      preferredStyle: .actionSheet
-    )
-
-    for branding in Branding.allCases {
-      let isCurrent = branding == AppConfiguration.branding
-      let titleBase = "\(branding.fullName) — \(branding.hostDisplayName)"
-      let title = isCurrent ? "✓ \(titleBase)" : titleBase
-
-      alert.addAction(UIAlertAction(title: title, style: .default, handler: { [weak self] _ in
-        self?.applyBranding(branding)
-      }))
+  private func showOrganizationPicker() {
+    let controller = OrganizationPickerViewController(
+      selectedBranding: AppConfiguration.branding
+    ) { [weak self] branding in
+      self?.applyBranding(branding)
     }
 
-    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+    let navigationController = UINavigationController(rootViewController: controller)
+    navigationController.modalPresentationStyle = .pageSheet
 
-    if let popover = alert.popoverPresentationController {
-      popover.sourceView = view
-      popover.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 1, height: 1)
+    if let sheet = navigationController.sheetPresentationController {
+      sheet.detents = [.medium()]
+      sheet.prefersGrabberVisible = true
+      sheet.preferredCornerRadius = 24
     }
 
-    present(alert, animated: true)
+    present(navigationController, animated: true)
   }
 
   private func applyBranding(_ branding: Branding) {
@@ -225,7 +217,7 @@ final class SettingsViewController: UITableViewController {
 
     let alert = UIAlertController(
       title: "Organization Updated",
-      message: "\(branding.fullName) is now selected.",
+      message: "\(branding.fullName) is Active.",
       preferredStyle: .alert
     )
 
@@ -279,14 +271,175 @@ final class SettingsViewController: UITableViewController {
       present(failure, animated: true)
     }
   }
+}
 
-  private func showReportBugPlaceholder() {
-    let alert = UIAlertController(
-      title: "Report a Bug",
-      message: "Bug reporting will be added here.",
-      preferredStyle: .alert
+private final class OrganizationPickerViewController: UIViewController {
+
+  private let pickerView = UIPickerView()
+  private let brandings = Branding.allCases
+  private let selectedBranding: Branding
+  private let onApply: (Branding) -> Void
+
+  init(selectedBranding: Branding, onApply: @escaping (Branding) -> Void) {
+    self.selectedBranding = selectedBranding
+    self.onApply = onApply
+    super.init(nibName: nil, bundle: nil)
+    title = "Choose Organization"
+  }
+
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+
+  override func viewDidLoad() {
+    super.viewDidLoad()
+
+    view.backgroundColor = AppTheme.groupedBackgroundColor
+    AppTheme.applyNavigationBarAppearance(to: navigationController)
+    configureNavigation()
+    configurePicker()
+    configureLayout()
+  }
+
+  private func configureNavigation() {
+    navigationItem.leftBarButtonItem = UIBarButtonItem(
+      barButtonSystemItem: .cancel,
+      target: self,
+      action: #selector(cancelTapped)
     )
-    alert.addAction(UIAlertAction(title: "OK", style: .default))
-    present(alert, animated: true)
+
+    navigationItem.rightBarButtonItem = UIBarButtonItem(
+      title: "Apply",
+      style: .done,
+      target: self,
+      action: #selector(applyTapped)
+    )
+  }
+
+  private func configurePicker() {
+    pickerView.translatesAutoresizingMaskIntoConstraints = false
+    pickerView.dataSource = self
+    pickerView.delegate = self
+    view.addSubview(pickerView)
+
+    if let selectedIndex = brandings.firstIndex(of: selectedBranding) {
+      pickerView.selectRow(selectedIndex, inComponent: 0, animated: false)
+    }
+  }
+
+  private func configureLayout() {
+    let titleLabel = UILabel()
+    titleLabel.translatesAutoresizingMaskIntoConstraints = false
+    titleLabel.text = "Choose Organization"
+    titleLabel.font = .systemFont(ofSize: 22, weight: .bold)
+    titleLabel.textColor = AppTheme.primaryTextColor
+    titleLabel.textAlignment = .center
+
+    let subtitleLabel = UILabel()
+    subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+    subtitleLabel.text = "Swipe to select the site and branding you want to use."
+    subtitleLabel.font = AppTheme.secondaryFont
+    subtitleLabel.textColor = AppTheme.secondaryTextColor
+    subtitleLabel.textAlignment = .center
+    subtitleLabel.numberOfLines = 0
+
+    let headerStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
+    headerStack.axis = .vertical
+    headerStack.spacing = 8
+    headerStack.translatesAutoresizingMaskIntoConstraints = false
+
+    let card = UIView()
+    card.translatesAutoresizingMaskIntoConstraints = false
+    card.backgroundColor = AppTheme.cardBackgroundColor
+    card.layer.cornerRadius = AppTheme.largeCornerRadius
+    card.layer.cornerCurve = .continuous
+
+    card.addSubview(pickerView)
+    view.addSubview(headerStack)
+    view.addSubview(card)
+
+    NSLayoutConstraint.activate([
+      headerStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+      headerStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+      headerStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+
+      card.topAnchor.constraint(equalTo: headerStack.bottomAnchor, constant: 20),
+      card.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+      card.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+      card.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+      card.heightAnchor.constraint(equalToConstant: 220),
+
+      pickerView.topAnchor.constraint(equalTo: card.topAnchor, constant: 8),
+      pickerView.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+      pickerView.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+      pickerView.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -8)
+    ])
+  }
+
+  @objc private func cancelTapped() {
+    dismiss(animated: true)
+  }
+
+  @objc private func applyTapped() {
+    let selectedIndex = pickerView.selectedRow(inComponent: 0)
+    let branding = brandings[selectedIndex]
+    dismiss(animated: true) {
+      self.onApply(branding)
+    }
+  }
+}
+
+extension OrganizationPickerViewController: UIPickerViewDataSource, UIPickerViewDelegate {
+  func numberOfComponents(in pickerView: UIPickerView) -> Int {
+    1
+  }
+
+  func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+    brandings.count
+  }
+
+  func pickerView(_ pickerView: UIPickerView, rowHeightForComponent component: Int) -> CGFloat {
+    54
+  }
+
+  func pickerView(_ pickerView: UIPickerView, widthForComponent component: Int) -> CGFloat {
+    pickerView.bounds.width - 24
+  }
+
+  func pickerView(_ pickerView: UIPickerView, viewForRow row: Int, forComponent component: Int, reusing view: UIView?) -> UIView {
+    let branding = brandings[row]
+
+    let container = UIView()
+    let titleLabel = UILabel()
+    let subtitleLabel = UILabel()
+
+    titleLabel.translatesAutoresizingMaskIntoConstraints = false
+    subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+
+    titleLabel.text = branding.fullName
+    titleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
+    titleLabel.textColor = AppTheme.primaryTextColor
+    titleLabel.textAlignment = .center
+
+    subtitleLabel.text = branding.hostDisplayName
+    subtitleLabel.font = .systemFont(ofSize: 13, weight: .regular)
+    subtitleLabel.textColor = AppTheme.secondaryTextColor
+    subtitleLabel.textAlignment = .center
+
+    container.addSubview(titleLabel)
+    container.addSubview(subtitleLabel)
+
+    NSLayoutConstraint.activate([
+      titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 4),
+      titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 8),
+      titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -8),
+
+      subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
+      subtitleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 8),
+      subtitleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -8),
+      subtitleLabel.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -4)
+    ])
+
+    return container
   }
 }
