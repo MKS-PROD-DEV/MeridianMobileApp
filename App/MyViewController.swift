@@ -71,6 +71,7 @@ final class MyViewController: CAPBridgeViewController,
   private var isAuthenticatingOfflineMode = false
   private var hasPresentedInitialSiteSelection = false
   private var isWaitingForInitialSiteLoad = false
+  private var isFloatingActionMenuOpen = false
 
   private let floatingMenuButton: UIButton = {
     let button = UIButton(type: .custom)
@@ -96,7 +97,99 @@ final class MyViewController: CAPBridgeViewController,
     button.isHidden = true
     return button
   }()
+    
+    private let floatingMenuOverlay: UIControl = {
+      let view = UIControl()
+      view.translatesAutoresizingMaskIntoConstraints = false
+      view.backgroundColor = UIColor.black.withAlphaComponent(0.08)
+      view.alpha = 0
+      view.isHidden = true
+      return view
+    }()
 
+    private let floatingOfflineButton: UIButton = {
+      let button = UIButton(type: .custom)
+      button.translatesAutoresizingMaskIntoConstraints = false
+      button.backgroundColor = .systemBackground
+      button.layer.cornerRadius = 26
+      button.layer.shadowColor = UIColor.black.cgColor
+      button.layer.shadowOpacity = 0.12
+      button.layer.shadowRadius = 8
+      button.layer.shadowOffset = CGSize(width: 0, height: 4)
+      button.setImage(UIImage(named: "MGPlayer"), for: .normal)
+      button.imageView?.contentMode = .scaleAspectFit
+      return button
+    }()
+
+    private let floatingSettingsButton: UIButton = {
+      let button = UIButton(type: .system)
+      button.translatesAutoresizingMaskIntoConstraints = false
+      button.backgroundColor = .systemBackground
+      button.layer.cornerRadius = 26
+      button.layer.shadowColor = UIColor.black.cgColor
+      button.layer.shadowOpacity = 0.12
+      button.layer.shadowRadius = 8
+      button.layer.shadowOffset = CGSize(width: 0, height: 4)
+      button.tintColor = AppTheme.primaryColor
+      button.setImage(UIImage(systemName: "gearshape.fill"), for: .normal)
+      button.imageView?.contentMode = .scaleAspectFit
+      return button
+    }()
+
+    private let floatingHelpButton: UIButton = {
+      let button = UIButton(type: .system)
+      button.translatesAutoresizingMaskIntoConstraints = false
+      button.backgroundColor = .systemBackground
+      button.layer.cornerRadius = 26
+      button.layer.shadowColor = UIColor.black.cgColor
+      button.layer.shadowOpacity = 0.12
+      button.layer.shadowRadius = 8
+      button.layer.shadowOffset = CGSize(width: 0, height: 4)
+      button.tintColor = AppTheme.primaryColor
+      button.setImage(UIImage(systemName: "questionmark.circle.fill"), for: .normal)
+      button.imageView?.contentMode = .scaleAspectFit
+      return button
+    }()
+
+    private func setupFloatingActionMenu() {
+      view.addSubview(floatingMenuOverlay)
+      view.addSubview(floatingOfflineButton)
+      view.addSubview(floatingSettingsButton)
+      view.addSubview(floatingHelpButton)
+
+      NSLayoutConstraint.activate([
+        floatingMenuOverlay.topAnchor.constraint(equalTo: view.topAnchor),
+        floatingMenuOverlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+        floatingMenuOverlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+        floatingMenuOverlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+
+        floatingOfflineButton.widthAnchor.constraint(equalToConstant: 52),
+        floatingOfflineButton.heightAnchor.constraint(equalToConstant: 52),
+        floatingOfflineButton.centerXAnchor.constraint(equalTo: floatingMenuButton.centerXAnchor),
+        floatingOfflineButton.centerYAnchor.constraint(equalTo: floatingMenuButton.centerYAnchor),
+
+        floatingSettingsButton.widthAnchor.constraint(equalToConstant: 52),
+        floatingSettingsButton.heightAnchor.constraint(equalToConstant: 52),
+        floatingSettingsButton.centerXAnchor.constraint(equalTo: floatingMenuButton.centerXAnchor),
+        floatingSettingsButton.centerYAnchor.constraint(equalTo: floatingMenuButton.centerYAnchor),
+
+        floatingHelpButton.widthAnchor.constraint(equalToConstant: 52),
+        floatingHelpButton.heightAnchor.constraint(equalToConstant: 52),
+        floatingHelpButton.centerXAnchor.constraint(equalTo: floatingMenuButton.centerXAnchor),
+        floatingHelpButton.centerYAnchor.constraint(equalTo: floatingMenuButton.centerYAnchor),
+      ])
+
+      [floatingOfflineButton, floatingSettingsButton, floatingHelpButton].forEach { button in
+        button.alpha = 0
+        button.isHidden = true
+      }
+
+      floatingMenuOverlay.addTarget(self, action: #selector(hideFloatingActionMenu), for: .touchUpInside)
+      floatingOfflineButton.addTarget(self, action: #selector(floatingOfflineTapped), for: .touchUpInside)
+      floatingSettingsButton.addTarget(self, action: #selector(floatingSettingsTapped), for: .touchUpInside)
+      floatingHelpButton.addTarget(self, action: #selector(floatingHelpTapped), for: .touchUpInside)
+    }
+    
   private let startupOverlay: UIView = {
     let view = UIView()
     view.translatesAutoresizingMaskIntoConstraints = false
@@ -209,9 +302,23 @@ final class MyViewController: CAPBridgeViewController,
   private var startupLogoCenterYConstraint: NSLayoutConstraint?
   private var startupLogoTopConstraint: NSLayoutConstraint?
 
+    override func viewDidLayoutSubviews() {
+      super.viewDidLayoutSubviews()
+      view.bringSubviewToFront(floatingMenuButton)
+
+      if isFloatingActionMenuOpen {
+        view.bringSubviewToFront(floatingMenuOverlay)
+        view.bringSubviewToFront(floatingOfflineButton)
+        view.bringSubviewToFront(floatingSettingsButton)
+        view.bringSubviewToFront(floatingHelpButton)
+        view.bringSubviewToFront(floatingMenuButton)
+      }
+    }
+    
   override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
     presentInitialSiteSelectionIfNeeded()
+    restoreFloatingMenuButtonVisibilityIfNeeded()
   }
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -258,6 +365,8 @@ final class MyViewController: CAPBridgeViewController,
     webView.scrollView.contentInsetAdjustmentBehavior = .always
 
     setupFloatingMenuButton()
+    setupFloatingActionMenu()
+    applyFloatingActionMenuBranding()
     setupStartupOverlay()
     startConnectivityMonitoring()
     runStartupSequence()
@@ -366,6 +475,14 @@ final class MyViewController: CAPBridgeViewController,
 
     view.bringSubviewToFront(startupOverlay)
   }
+    
+    private func restoreFloatingMenuButtonVisibilityIfNeeded() {
+      if !isShowingOfflineMode {
+        floatingMenuButton.isHidden = false
+        floatingMenuButton.alpha = 1
+        view.bringSubviewToFront(floatingMenuButton)
+      }
+    }
 
   private func startConnectivityMonitoring() {
     monitor.pathUpdateHandler = { [weak self] path in
@@ -497,7 +614,8 @@ final class MyViewController: CAPBridgeViewController,
 
     floatingMenuButton.isHidden = true
     floatingMenuButton.alpha = 0
-
+    view.bringSubviewToFront(floatingMenuButton)
+      
     loadingTrackView.isHidden = false
     loadingStatusLabel.isHidden = false
     loadingTrackView.alpha = 0
@@ -638,6 +756,7 @@ final class MyViewController: CAPBridgeViewController,
     if let webView = self.webView {
       webView.load(URLRequest(url: AppConfiguration.launchURL))
         AppTheme.applyNavigationBarAppearance(to: navigationController)
+        applyFloatingActionMenuBranding()
     }
 
     floatingMenuButton.backgroundColor = .systemBackground
@@ -663,6 +782,19 @@ final class MyViewController: CAPBridgeViewController,
     loadingFillView.backgroundColor = AppTheme.primaryColor
   }
 
+    private func applyFloatingActionMenuBranding() {
+      floatingSettingsButton.tintColor = AppTheme.primaryColor
+      floatingHelpButton.tintColor = AppTheme.primaryColor
+
+      floatingSettingsButton.backgroundColor = .systemBackground
+      floatingHelpButton.backgroundColor = .systemBackground
+      floatingOfflineButton.backgroundColor = .systemBackground
+
+      floatingSettingsButton.layer.cornerRadius = 26
+      floatingHelpButton.layer.cornerRadius = 26
+      floatingOfflineButton.layer.cornerRadius = 26
+    }
+    
   private func dismissPresentedContentIfNeeded(completion: @escaping () -> Void) {
     if let presented = presentedViewController,
       !(presented is UIAlertController)
@@ -733,39 +865,131 @@ final class MyViewController: CAPBridgeViewController,
     presentSettings()
   }
 
-  @objc private func showFloatingMenu() {
-    let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+    @objc private func showFloatingMenu() {
+      if isFloatingActionMenuOpen {
+        hideFloatingActionMenu()
+        return
+      }
 
-    alert.addAction(
-      UIAlertAction(
-        title: "Offline Mode", style: .default,
-        handler: { [weak self] _ in
-          self?.requestOfflineModeAccess()
-        }))
+      isFloatingActionMenuOpen = true
+      floatingMenuOverlay.isHidden = false
+      floatingOfflineButton.isHidden = false
+      floatingSettingsButton.isHidden = false
+      floatingHelpButton.isHidden = false
 
-    alert.addAction(
-      UIAlertAction(
-        title: "Settings", style: .default,
-        handler: { [weak self] _ in
-          self?.presentSettings()
-        }))
+      view.bringSubviewToFront(floatingMenuOverlay)
+      view.bringSubviewToFront(floatingOfflineButton)
+      view.bringSubviewToFront(floatingSettingsButton)
+      view.bringSubviewToFront(floatingHelpButton)
+      view.bringSubviewToFront(floatingMenuButton)
 
-    alert.addAction(
-      UIAlertAction(
-        title: "Help", style: .default,
-        handler: { [weak self] _ in
-          self?.presentHelp()
-        }))
+      floatingMenuOverlay.alpha = 0
 
-    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+      floatingOfflineButton.alpha = 0
+      floatingSettingsButton.alpha = 0
+      floatingHelpButton.alpha = 0
 
-    if let popover = alert.popoverPresentationController {
-      popover.sourceView = floatingMenuButton
-      popover.sourceRect = floatingMenuButton.bounds
+      floatingOfflineButton.transform = CGAffineTransform(scaleX: 0.2, y: 0.2)
+      floatingSettingsButton.transform = CGAffineTransform(scaleX: 0.2, y: 0.2)
+      floatingHelpButton.transform = CGAffineTransform(scaleX: 0.2, y: 0.2)
+
+      UIView.animate(withDuration: 0.18) {
+        self.floatingMenuOverlay.alpha = 1
+      }
+
+      UIView.animate(
+        withDuration: 0.45,
+        delay: 0.00,
+        usingSpringWithDamping: 0.72,
+        initialSpringVelocity: 0.7,
+        options: [.curveEaseOut],
+        animations: {
+          self.floatingOfflineButton.alpha = 1
+          self.floatingOfflineButton.transform = CGAffineTransform(translationX: -72, y: 0)
+        }
+      )
+
+      UIView.animate(
+        withDuration: 0.45,
+        delay: 0.03,
+        usingSpringWithDamping: 0.72,
+        initialSpringVelocity: 0.7,
+        options: [.curveEaseOut],
+        animations: {
+          self.floatingSettingsButton.alpha = 1
+          self.floatingSettingsButton.transform = CGAffineTransform(translationX: -54, y: -54)
+        }
+      )
+
+      UIView.animate(
+        withDuration: 0.45,
+        delay: 0.06,
+        usingSpringWithDamping: 0.72,
+        initialSpringVelocity: 0.7,
+        options: [.curveEaseOut],
+        animations: {
+          self.floatingHelpButton.alpha = 1
+          self.floatingHelpButton.transform = CGAffineTransform(translationX: 0, y: -72)
+        }
+      )
+    }
+    
+    @objc private func hideFloatingActionMenu() {
+      guard isFloatingActionMenuOpen else { return }
+
+      isFloatingActionMenuOpen = false
+
+      UIView.animate(withDuration: 0.16) {
+        self.floatingMenuOverlay.alpha = 0
+      }
+
+      let buttons = [floatingHelpButton, floatingSettingsButton, floatingOfflineButton]
+
+      for (index, button) in buttons.enumerated() {
+        UIView.animate(
+          withDuration: 0.18,
+          delay: 0.02 * Double(index),
+          options: [.curveEaseIn],
+          animations: {
+            button.alpha = 0
+            button.transform = CGAffineTransform(scaleX: 0.2, y: 0.2)
+          },
+          completion: { _ in
+            if index == buttons.count - 1 {
+              self.floatingMenuOverlay.isHidden = true
+              self.floatingOfflineButton.isHidden = true
+              self.floatingSettingsButton.isHidden = true
+              self.floatingHelpButton.isHidden = true
+
+              self.floatingOfflineButton.transform = .identity
+              self.floatingSettingsButton.transform = .identity
+              self.floatingHelpButton.transform = .identity
+            }
+          }
+        )
+      }
     }
 
-    present(alert, animated: true)
-  }
+    @objc private func floatingOfflineTapped() {
+      hideFloatingActionMenu()
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+        self.requestOfflineModeAccess()
+      }
+    }
+
+    @objc private func floatingSettingsTapped() {
+      hideFloatingActionMenu()
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+        self.presentSettings()
+      }
+    }
+
+    @objc private func floatingHelpTapped() {
+      hideFloatingActionMenu()
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+        self.presentHelp()
+      }
+    }
 
     private func presentCourseList() {
       let courses = ScormUtils.loadAllCourses()
