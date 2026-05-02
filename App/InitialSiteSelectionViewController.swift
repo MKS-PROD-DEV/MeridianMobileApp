@@ -71,15 +71,15 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
     return view
   }()
 
-  private let tableView: UITableView = {
-    let tableView = UITableView(frame: .zero, style: .insetGrouped)
-    tableView.translatesAutoresizingMaskIntoConstraints = false
-    tableView.backgroundColor = .clear
-    tableView.separatorStyle = .singleLine
-    tableView.showsVerticalScrollIndicator = false
-    tableView.isScrollEnabled = false
-    return tableView
-  }()
+    private let tableView: UITableView = {
+      let tableView = UITableView(frame: .zero, style: .insetGrouped)
+      tableView.translatesAutoresizingMaskIntoConstraints = false
+      tableView.backgroundColor = .clear
+      tableView.separatorStyle = .singleLine
+      tableView.showsVerticalScrollIndicator = false
+      tableView.isScrollEnabled = true
+      return tableView
+    }()
 
   private let confirmButton: UIButton = {
     let button = UIButton(type: .system)
@@ -178,7 +178,7 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
       tableView.leadingAnchor.constraint(equalTo: cardContainerView.leadingAnchor),
       tableView.trailingAnchor.constraint(equalTo: cardContainerView.trailingAnchor),
       tableView.bottomAnchor.constraint(equalTo: cardContainerView.bottomAnchor, constant: -4),
-      tableView.heightAnchor.constraint(equalToConstant: CGFloat(Branding.allCases.count) * 72),
+      tableView.heightAnchor.constraint(equalToConstant: 320),
 
       confirmButton.topAnchor.constraint(equalTo: cardContainerView.bottomAnchor, constant: 24),
       confirmButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppTheme.screenHorizontalPadding),
