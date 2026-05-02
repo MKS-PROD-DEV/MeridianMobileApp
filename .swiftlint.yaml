@@ -13,3 +13,10 @@ type_body_length:
 
 function_body_length:
   warning: 600
+
+opt_in_rules:
+  - indentation_width
+
+indentation_width:
+  indentation_width: 2
+  severity: warning

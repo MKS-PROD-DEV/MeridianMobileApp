@@ -62,15 +62,15 @@ enum ScormProgressStoreSQL {
   static let markCMISynced = """
     UPDATE sco_progress
     SET sync_status = 'synced',
-        last_synced_at = ?,
-        sync_error = NULL
+      last_synced_at = ?,
+      sync_error = NULL
     WHERE asset_id = ? AND sco_id = ?;
     """
 
   static let markCMISyncFailed = """
     UPDATE sco_progress
     SET sync_status = 'failed',
-        sync_error = ?
+      sync_error = ?
     WHERE asset_id = ? AND sco_id = ?;
     """
 

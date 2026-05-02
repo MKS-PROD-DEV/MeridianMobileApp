@@ -275,144 +275,144 @@ final class ScormUtils {
 }
 
 private final class ManifestParser: NSObject, XMLParserDelegate {
-    private let data: Data
-    private var defaultOrganizationId: String?
-    private var currentOrganizationId: String?
-    private var currentResourceIdentifier: String?
-    private var currentResourceHref: String?
-    private var inOrganizations = false
-    private var inOrganization = false
-    private var inResources = false
-    private var inItem = false
-    private var currentText = ""
-    private struct ItemNode {
-        let identifier: String
-        let identifierRef: String?
-        var title: String
-        let organizationId: String
-    }
-    private var manifestTitle: String?
-    private var currentItem: ItemNode?
-    private var items: [ItemNode] = []
-    private var resourceHrefByIdentifier: [String: String] = [:]
-    init(xml: String) {
-        self.data = Data(xml.utf8)
-    }
+  private let data: Data
+  private var defaultOrganizationId: String?
+  private var currentOrganizationId: String?
+  private var currentResourceIdentifier: String?
+  private var currentResourceHref: String?
+  private var inOrganizations = false
+  private var inOrganization = false
+  private var inResources = false
+  private var inItem = false
+  private var currentText = ""
+  private struct ItemNode {
+    let identifier: String
+    let identifierRef: String?
+    var title: String
+    let organizationId: String
+  }
+  private var manifestTitle: String?
+  private var currentItem: ItemNode?
+  private var items: [ItemNode] = []
+  private var resourceHrefByIdentifier: [String: String] = [:]
+  init(xml: String) {
+    self.data = Data(xml.utf8)
+  }
     func parse() -> ScormManifestData? {
-        let parser = XMLParser(data: data)
+      let parser = XMLParser(data: data)
         parser.delegate = self
         guard parser.parse() else { return nil }
         let chosenOrgId = defaultOrganizationId ?? items.first?.organizationId
         let chosenItems = items.filter { $0.organizationId == chosenOrgId }
         let scos: [ScormSco] = chosenItems.compactMap { item in
-            guard let identifierRef = item.identifierRef,
-                  let href = resourceHrefByIdentifier[identifierRef]
+          guard let identifierRef = item.identifierRef,
+            let href = resourceHrefByIdentifier[identifierRef]
             else {
-                return nil
+              return nil
             }
             return ScormSco(
-                itemIdentifier: item.identifier,
-                resourceIdentifier: identifierRef,
-                title: item.title.isEmpty ? item.identifier : item.title,
-                href: href
+              itemIdentifier: item.identifier,
+              resourceIdentifier: identifierRef,
+              title: item.title.isEmpty ? item.identifier : item.title,
+              href: href
             )
         }
         return ScormManifestData(
-            title: manifestTitle,
-            scos: scos
+          title: manifestTitle,
+          scos: scos
         )
     }
     func parser(
-        _ parser: XMLParser,
-        didStartElement elementName: String,
-        namespaceURI: String?,
-        qualifiedName qName: String?,
-        attributes attributeDict: [String: String] = [:]
+      _ parser: XMLParser,
+      didStartElement elementName: String,
+      namespaceURI: String?,
+      qualifiedName qName: String?,
+      attributes attributeDict: [String: String] = [:]
     ) {
-        let name = qName ?? elementName
+      let name = qName ?? elementName
         currentText = ""
         switch name {
         case "organizations":
-            inOrganizations = true
-            defaultOrganizationId = attributeDict["default"]
+          inOrganizations = true
+          defaultOrganizationId = attributeDict["default"]
         case "organization":
-            inOrganization = true
-            currentOrganizationId = attributeDict["identifier"]
+          inOrganization = true
+          currentOrganizationId = attributeDict["identifier"]
         case "item":
-            if inOrganization, let orgId = currentOrganizationId,
-               let identifier = attributeDict["identifier"] {
-                inItem = true
-                currentItem = ItemNode(
-                    identifier: identifier,
-                    identifierRef: attributeDict["identifierref"],
-                    title: "",
-                    organizationId: orgId
-                )
+          if inOrganization, let orgId = currentOrganizationId,
+            let identifier = attributeDict["identifier"] {
+              inItem = true
+              currentItem = ItemNode(
+                identifier: identifier,
+                identifierRef: attributeDict["identifierref"],
+                title: "",
+                organizationId: orgId
+              )
             }
         case "resources":
-            inResources = true
+          inResources = true
         case "resource":
-            if inResources {
-                currentResourceIdentifier = attributeDict["identifier"]
-                currentResourceHref = attributeDict["href"]
-            }
+          if inResources {
+            currentResourceIdentifier = attributeDict["identifier"]
+            currentResourceHref = attributeDict["href"]
+          }
         default:
-            break
+          break
         }
     }
     func parser(_ parser: XMLParser, foundCharacters string: String) {
-        currentText += string
+      currentText += string
     }
     func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
-        let name = qName ?? elementName
-        let text = currentText.trimmingCharacters(in: .whitespacesAndNewlines)
-        switch name {
+      let name = qName ?? elementName
+      let text = currentText.trimmingCharacters(in: .whitespacesAndNewlines)
+      switch name {
         case "title":
-            handleEndTitle(text)
+          handleEndTitle(text)
         case "item":
-            handleEndItem()
+          handleEndItem()
         case "resource":
-            handleEndResource()
+          handleEndResource()
         case "organization":
-            handleEndOrganization()
+          handleEndOrganization()
         case "organizations":
-            inOrganizations = false
+          inOrganizations = false
         case "resources":
-            inResources = false
+          inResources = false
         default:
-            break
+          break
         }
         currentText = ""
     }
     private func handleEndTitle(_ text: String) {
-        if inItem, var item = currentItem, !text.isEmpty {
-            item = ItemNode(
-                identifier: item.identifier,
-                identifierRef: item.identifierRef,
-                title: text,
-                organizationId: item.organizationId
-            )
-            currentItem = item
+      if inItem, var item = currentItem, !text.isEmpty {
+        item = ItemNode(
+          identifier: item.identifier,
+          identifierRef: item.identifierRef,
+          title: text,
+          organizationId: item.organizationId
+        )
+          currentItem = item
         } else if inOrganization, manifestTitle == nil, !text.isEmpty {
-            manifestTitle = text
+          manifestTitle = text
         }
     }
     private func handleEndItem() {
-        if let item = currentItem {
-            items.append(item)
-        }
-        currentItem = nil
-        inItem = false
+      if let item = currentItem {
+        items.append(item)
+      }
+      currentItem = nil
+      inItem = false
     }
     private func handleEndResource() {
-        if let id = currentResourceIdentifier, let href = currentResourceHref {
-            resourceHrefByIdentifier[id] = href
+      if let id = currentResourceIdentifier, let href = currentResourceHref {
+        resourceHrefByIdentifier[id] = href
         }
         currentResourceIdentifier = nil
         currentResourceHref = nil
     }
     private func handleEndOrganization() {
-        inOrganization = false
-        currentOrganizationId = nil
+      inOrganization = false
+      currentOrganizationId = nil
     }
 }
