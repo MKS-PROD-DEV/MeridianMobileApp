@@ -305,16 +305,15 @@ final class MyViewController: CAPBridgeViewController,
 
     startupLogoCenterYConstraint = startupLogoButton.centerYAnchor.constraint(
       equalTo: startupOverlay.centerYAnchor, constant: -40)
-    startupLogoTopConstraint = startupLogoButton.topAnchor.constraint(
-      equalTo: startupOverlay.safeAreaLayoutGuide.topAnchor, constant: 20)
+      startupLogoTopConstraint = startupLogoButton.topAnchor.constraint(equalTo: startupOverlay.safeAreaLayoutGuide.topAnchor, constant: 10)
     startupLogoTopConstraint?.isActive = false
 
     startupLogoCenterYConstraint?.isActive = true
 
     NSLayoutConstraint.activate([
       startupLogoButton.centerXAnchor.constraint(equalTo: startupOverlay.centerXAnchor),
-      startupLogoButton.widthAnchor.constraint(equalToConstant: 92),
-      startupLogoButton.heightAnchor.constraint(equalToConstant: 92),
+      startupLogoButton.widthAnchor.constraint(equalToConstant: 64),
+      startupLogoButton.heightAnchor.constraint(equalToConstant: 64),
 
       loadingTrackView.topAnchor.constraint(equalTo: startupLogoButton.bottomAnchor, constant: 24),
       loadingTrackView.centerXAnchor.constraint(equalTo: startupOverlay.centerXAnchor),
@@ -328,10 +327,10 @@ final class MyViewController: CAPBridgeViewController,
       loadingStatusLabel.topAnchor.constraint(equalTo: loadingTrackView.bottomAnchor, constant: 16),
       loadingStatusLabel.centerXAnchor.constraint(equalTo: startupOverlay.centerXAnchor),
 
-      offlineTitleLabel.topAnchor.constraint(equalTo: startupLogoButton.bottomAnchor, constant: 8),
+      offlineTitleLabel.topAnchor.constraint(equalTo: startupLogoButton.bottomAnchor, constant: 4),
       offlineTitleLabel.centerXAnchor.constraint(equalTo: startupOverlay.centerXAnchor),
 
-      offlineHelpButton.topAnchor.constraint(equalTo: offlineTitleLabel.bottomAnchor, constant: 14),
+      offlineHelpButton.topAnchor.constraint(equalTo: offlineTitleLabel.bottomAnchor, constant: 6),
       offlineHelpButton.leadingAnchor.constraint(
         equalTo: startupOverlay.safeAreaLayoutGuide.leadingAnchor, constant: 24),
 
@@ -339,12 +338,12 @@ final class MyViewController: CAPBridgeViewController,
       offlineGoOnlineButton.centerXAnchor.constraint(equalTo: startupOverlay.centerXAnchor),
 
       offlineSettingsButton.topAnchor.constraint(
-        equalTo: offlineTitleLabel.bottomAnchor, constant: 14),
+        equalTo: offlineTitleLabel.bottomAnchor, constant: 6),
       offlineSettingsButton.trailingAnchor.constraint(
         equalTo: startupOverlay.safeAreaLayoutGuide.trailingAnchor, constant: -24),
 
       offlineCoursesContainerView.topAnchor.constraint(
-        equalTo: offlineHelpButton.bottomAnchor, constant: 18),
+        equalTo: offlineHelpButton.bottomAnchor, constant: 8),
       offlineCoursesContainerView.leadingAnchor.constraint(
         equalTo: startupOverlay.safeAreaLayoutGuide.leadingAnchor),
       offlineCoursesContainerView.trailingAnchor.constraint(
@@ -542,7 +541,7 @@ final class MyViewController: CAPBridgeViewController,
     let courses = ScormUtils.loadAllCourses()
     let courseListVC = ScormCourseListViewController(courses: courses)
     let nav = UINavigationController(rootViewController: courseListVC)
-    nav.setNavigationBarHidden(false, animated: false)
+    nav.setNavigationBarHidden(true, animated: false)
 
     addChild(nav)
     offlineCoursesContainerView.addSubview(nav.view)
@@ -563,7 +562,7 @@ final class MyViewController: CAPBridgeViewController,
     let courses = ScormUtils.loadAllCourses()
     let courseListVC = ScormCourseListViewController(courses: courses)
     embeddedOfflineCourseListNavController?.setViewControllers([courseListVC], animated: false)
-    embeddedOfflineCourseListNavController?.setNavigationBarHidden(false, animated: false)
+    embeddedOfflineCourseListNavController?.setNavigationBarHidden(true, animated: false)
   }
 
   private func completeStartupOverlayDismissalIfNeeded() {
@@ -638,6 +637,7 @@ final class MyViewController: CAPBridgeViewController,
   private func handleBrandingSelectionApplied() {
     if let webView = self.webView {
       webView.load(URLRequest(url: AppConfiguration.launchURL))
+        AppTheme.applyNavigationBarAppearance(to: navigationController)
     }
 
     floatingMenuButton.backgroundColor = .systemBackground
@@ -767,29 +767,32 @@ final class MyViewController: CAPBridgeViewController,
     present(alert, animated: true)
   }
 
-  private func presentCourseList() {
-    let courses = ScormUtils.loadAllCourses()
-    let vc = ScormCourseListViewController(courses: courses)
-    let nav = UINavigationController(rootViewController: vc)
-    nav.modalPresentationStyle = .formSheet
-    present(nav, animated: true)
-  }
-
-  private func presentSettings() {
-    let vc = SettingsViewController { [weak self] _ in
-      self?.handleBrandingSelectionApplied()
+    private func presentCourseList() {
+      let courses = ScormUtils.loadAllCourses()
+      let vc = ScormCourseListViewController(courses: courses)
+      let nav = UINavigationController(rootViewController: vc)
+      AppTheme.applyNavigationBarAppearance(to: nav)
+      nav.modalPresentationStyle = .pageSheet
+      present(nav, animated: true)
     }
-    let nav = UINavigationController(rootViewController: vc)
-    nav.modalPresentationStyle = .formSheet
-    present(nav, animated: true)
-  }
 
-  private func presentHelp() {
-    let vc = HelpViewController()
-    let nav = UINavigationController(rootViewController: vc)
-    nav.modalPresentationStyle = .formSheet
-    present(nav, animated: true)
-  }
+    private func presentSettings() {
+      let vc = SettingsViewController { [weak self] _ in
+        self?.handleBrandingSelectionApplied()
+      }
+      let nav = UINavigationController(rootViewController: vc)
+      AppTheme.applyNavigationBarAppearance(to: nav)
+      nav.modalPresentationStyle = .pageSheet
+      present(nav, animated: true)
+    }
+
+    private func presentHelp() {
+      let vc = HelpViewController()
+      let nav = UINavigationController(rootViewController: vc)
+      AppTheme.applyNavigationBarAppearance(to: nav)
+      nav.modalPresentationStyle = .pageSheet
+      present(nav, animated: true)
+    }
 
   func userContentController(
     _ userContentController: WKUserContentController,

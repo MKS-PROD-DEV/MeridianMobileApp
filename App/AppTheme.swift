@@ -16,8 +16,80 @@ enum AppTheme {
     }
   }
 
+  static var accentColor: UIColor {
+    primaryColor
+  }
+
   static var backgroundColor: UIColor {
-    .white
+    .systemBackground
+  }
+
+  static var groupedBackgroundColor: UIColor {
+    .systemGroupedBackground
+  }
+
+  static var secondaryBackgroundColor: UIColor {
+    .secondarySystemBackground
+  }
+
+  static var cardBackgroundColor: UIColor {
+    .secondarySystemBackground
+  }
+
+  static var primaryTextColor: UIColor {
+    .label
+  }
+
+  static var secondaryTextColor: UIColor {
+    .secondaryLabel
+  }
+
+  static var destructiveColor: UIColor {
+    .systemRed
+  }
+
+  static var separatorColor: UIColor {
+    .separator
+  }
+
+  static var cornerRadius: CGFloat {
+    14
+  }
+
+  static var largeCornerRadius: CGFloat {
+    18
+  }
+
+  static var screenHorizontalPadding: CGFloat {
+    20
+  }
+
+  static var sectionSpacing: CGFloat {
+    24
+  }
+
+  static var rowHeight: CGFloat {
+    64
+  }
+
+  static var titleFont: UIFont {
+    .systemFont(ofSize: 28, weight: .bold)
+  }
+
+  static var sectionTitleFont: UIFont {
+    .systemFont(ofSize: 20, weight: .semibold)
+  }
+
+  static var bodyFont: UIFont {
+    .systemFont(ofSize: 17, weight: .regular)
+  }
+
+  static var secondaryFont: UIFont {
+    .systemFont(ofSize: 14, weight: .regular)
+  }
+
+  static var buttonFont: UIFont {
+    .systemFont(ofSize: 18, weight: .semibold)
   }
 
   static var logoImage: UIImage? {
@@ -48,5 +120,38 @@ enum AppTheme {
     case .vabc:
       return "VABC"
     }
+  }
+
+  static func stylePrimaryButton(_ button: UIButton) {
+    button.backgroundColor = primaryColor
+    button.setTitleColor(.white, for: .normal)
+    button.titleLabel?.font = buttonFont
+    button.layer.cornerRadius = cornerRadius
+    button.clipsToBounds = true
+  }
+
+  static func styleSecondaryButton(_ button: UIButton) {
+    button.backgroundColor = secondaryBackgroundColor
+    button.setTitleColor(primaryTextColor, for: .normal)
+    button.titleLabel?.font = buttonFont
+    button.layer.cornerRadius = cornerRadius
+    button.clipsToBounds = true
+  }
+
+  static func applyNavigationBarAppearance(to navigationController: UINavigationController?) {
+    guard let navigationBar = navigationController?.navigationBar else { return }
+
+    let appearance = UINavigationBarAppearance()
+    appearance.configureWithOpaqueBackground()
+    appearance.backgroundColor = backgroundColor
+    appearance.titleTextAttributes = [.foregroundColor: primaryTextColor]
+    appearance.largeTitleTextAttributes = [.foregroundColor: primaryTextColor]
+    appearance.shadowColor = .clear
+
+    navigationBar.standardAppearance = appearance
+    navigationBar.scrollEdgeAppearance = appearance
+    navigationBar.compactAppearance = appearance
+    navigationBar.tintColor = accentColor
+    navigationBar.prefersLargeTitles = false
   }
 }

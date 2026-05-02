@@ -1,10 +1,30 @@
 import UIKit
 
-final class InitialSiteSelectionViewController: UIViewController, UITableViewDataSource,
-  UITableViewDelegate
-{
+final class InitialSiteSelectionViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
   private let onConfirm: (Branding) -> Void
   private var selectedBranding: Branding?
+
+  private let scrollView: UIScrollView = {
+    let view = UIScrollView()
+    view.translatesAutoresizingMaskIntoConstraints = false
+    view.alwaysBounceVertical = true
+    view.keyboardDismissMode = .onDrag
+    return view
+  }()
+
+  private let contentView: UIView = {
+    let view = UIView()
+    view.translatesAutoresizingMaskIntoConstraints = false
+    return view
+  }()
+
+  private let logoContainerView: UIView = {
+    let view = UIView()
+    view.translatesAutoresizingMaskIntoConstraints = false
+    view.backgroundColor = AppTheme.secondaryBackgroundColor
+    view.layer.cornerRadius = 22
+    return view
+  }()
 
   private let logoImageView: UIImageView = {
     let iv = UIImageView(image: UIImage(named: "MGLogo"))
@@ -17,9 +37,9 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
     let label = UILabel()
     label.translatesAutoresizingMaskIntoConstraints = false
     label.text = "Meridian Global"
-    label.font = .systemFont(ofSize: 28, weight: .bold)
+    label.font = AppTheme.titleFont
     label.textAlignment = .center
-    label.textColor = .label
+    label.textColor = AppTheme.primaryTextColor
     return label
   }()
 
@@ -27,27 +47,46 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
     let label = UILabel()
     label.translatesAutoresizingMaskIntoConstraints = false
     label.text = "Please select your Organization to continue."
-    label.font = .systemFont(ofSize: 17, weight: .regular)
+    label.font = AppTheme.bodyFont
     label.textAlignment = .center
-    label.textColor = .secondaryLabel
+    label.textColor = AppTheme.secondaryTextColor
     label.numberOfLines = 0
     return label
+  }()
+
+  private let listTitleLabel: UILabel = {
+    let label = UILabel()
+    label.translatesAutoresizingMaskIntoConstraints = false
+    //Can add a label here label.text = ""
+    label.font = AppTheme.sectionTitleFont
+    label.textColor = AppTheme.primaryTextColor
+    return label
+  }()
+
+  private let cardContainerView: UIView = {
+    let view = UIView()
+    view.translatesAutoresizingMaskIntoConstraints = false
+    view.backgroundColor = AppTheme.cardBackgroundColor
+    view.layer.cornerRadius = AppTheme.largeCornerRadius
+    view.layer.cornerCurve = .continuous
+    return view
   }()
 
   private let tableView: UITableView = {
     let tableView = UITableView(frame: .zero, style: .insetGrouped)
     tableView.translatesAutoresizingMaskIntoConstraints = false
+    tableView.backgroundColor = .clear
+    tableView.separatorStyle = .singleLine
+    tableView.showsVerticalScrollIndicator = false
+    tableView.isScrollEnabled = false
     return tableView
   }()
 
   private let confirmButton: UIButton = {
     let button = UIButton(type: .system)
     button.translatesAutoresizingMaskIntoConstraints = false
-    button.setTitle("Confirm", for: .normal)
-    button.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
-    button.backgroundColor = AppTheme.primaryColor
-    button.setTitleColor(.white, for: .normal)
-    button.layer.cornerRadius = 12
+    button.setTitle("Confirm Selection", for: .normal)
+    AppTheme.stylePrimaryButton(button)
     button.isEnabled = false
     button.alpha = 0.5
     return button
@@ -56,7 +95,7 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
   init(onConfirm: @escaping (Branding) -> Void) {
     self.onConfirm = onConfirm
     super.init(nibName: nil, bundle: nil)
-    self.modalPresentationStyle = .fullScreen
+    modalPresentationStyle = .fullScreen
   }
 
   required init?(coder: NSCoder) {
@@ -65,44 +104,88 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    view.backgroundColor = .systemBackground
+
+    view.backgroundColor = AppTheme.groupedBackgroundColor
 
     tableView.dataSource = self
     tableView.delegate = self
     tableView.register(UITableViewCell.self, forCellReuseIdentifier: "BrandingCell")
+    tableView.rowHeight = 72
+    tableView.sectionHeaderHeight = 0
+    tableView.sectionFooterHeight = 0
 
     confirmButton.addTarget(self, action: #selector(confirmTapped), for: .touchUpInside)
 
-    view.addSubview(logoImageView)
-    view.addSubview(titleLabel)
-    view.addSubview(subtitleLabel)
-    view.addSubview(tableView)
-    view.addSubview(confirmButton)
+    setupLayout()
+  }
+
+  override func viewDidLayoutSubviews() {
+    super.viewDidLayoutSubviews()
+    tableView.layoutIfNeeded()
+  }
+
+  private func setupLayout() {
+    view.addSubview(scrollView)
+    scrollView.addSubview(contentView)
+
+    contentView.addSubview(logoContainerView)
+    logoContainerView.addSubview(logoImageView)
+    contentView.addSubview(titleLabel)
+    contentView.addSubview(subtitleLabel)
+    contentView.addSubview(listTitleLabel)
+    contentView.addSubview(cardContainerView)
+    cardContainerView.addSubview(tableView)
+    contentView.addSubview(confirmButton)
 
     NSLayoutConstraint.activate([
-      logoImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24),
-      logoImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-      logoImageView.widthAnchor.constraint(equalToConstant: 96),
-      logoImageView.heightAnchor.constraint(equalToConstant: 96),
+      scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+      scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-      titleLabel.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: 12),
-      titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-      titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+      contentView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+      contentView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+      contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+      contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+      contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
 
-      subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
-      subtitleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-      subtitleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+      logoContainerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 24),
+      logoContainerView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+      logoContainerView.widthAnchor.constraint(equalToConstant: 112),
+      logoContainerView.heightAnchor.constraint(equalToConstant: 112),
 
-      tableView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 20),
-      tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      logoImageView.centerXAnchor.constraint(equalTo: logoContainerView.centerXAnchor),
+      logoImageView.centerYAnchor.constraint(equalTo: logoContainerView.centerYAnchor),
+      logoImageView.widthAnchor.constraint(equalToConstant: 76),
+      logoImageView.heightAnchor.constraint(equalToConstant: 76),
 
-      confirmButton.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 16),
-      confirmButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-      confirmButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-      confirmButton.bottomAnchor.constraint(
-        equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-      confirmButton.heightAnchor.constraint(equalToConstant: 50),
+      titleLabel.topAnchor.constraint(equalTo: logoContainerView.bottomAnchor, constant: 20),
+      titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppTheme.screenHorizontalPadding),
+      titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppTheme.screenHorizontalPadding),
+
+      subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
+      subtitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppTheme.screenHorizontalPadding),
+      subtitleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppTheme.screenHorizontalPadding),
+
+      listTitleLabel.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 28),
+      listTitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppTheme.screenHorizontalPadding),
+      listTitleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppTheme.screenHorizontalPadding),
+
+      cardContainerView.topAnchor.constraint(equalTo: listTitleLabel.bottomAnchor, constant: 12),
+      cardContainerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+      cardContainerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+
+      tableView.topAnchor.constraint(equalTo: cardContainerView.topAnchor, constant: 4),
+      tableView.leadingAnchor.constraint(equalTo: cardContainerView.leadingAnchor),
+      tableView.trailingAnchor.constraint(equalTo: cardContainerView.trailingAnchor),
+      tableView.bottomAnchor.constraint(equalTo: cardContainerView.bottomAnchor, constant: -4),
+      tableView.heightAnchor.constraint(equalToConstant: CGFloat(Branding.allCases.count) * 72),
+
+      confirmButton.topAnchor.constraint(equalTo: cardContainerView.bottomAnchor, constant: 24),
+      confirmButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppTheme.screenHorizontalPadding),
+      confirmButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppTheme.screenHorizontalPadding),
+      confirmButton.heightAnchor.constraint(equalToConstant: 54),
+      confirmButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -28)
     ])
   }
 
@@ -120,11 +203,18 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
     let cell = tableView.dequeueReusableCell(withIdentifier: "BrandingCell", for: indexPath)
 
     var content = cell.defaultContentConfiguration()
-    content.text = branding.displayName
-    content.secondaryText = "\(branding.fullName) • \(branding.hostDisplayName)"
+    content.text = branding.fullName
+    content.secondaryText = branding.hostDisplayName
+    content.textProperties.font = .systemFont(ofSize: 17, weight: .semibold)
+    content.textProperties.color = AppTheme.primaryTextColor
+    content.secondaryTextProperties.font = AppTheme.secondaryFont
+    content.secondaryTextProperties.color = AppTheme.secondaryTextColor
 
     cell.contentConfiguration = content
-    cell.accessoryType = (branding == selectedBranding) ? .checkmark : .none
+    cell.backgroundColor = .clear
+    cell.selectionStyle = .none
+    cell.accessoryType = branding == selectedBranding ? .checkmark : .none
+    cell.tintColor = AppTheme.accentColor
 
     return cell
   }
