@@ -18,6 +18,10 @@
 		C5102DA32FA4187F003F63AC /* Authenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5102DA22FA41878003F63AC /* Authenticator.swift */; };
 		C5102DA52FA4E391003F63AC /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5102DA42FA4E38E003F63AC /* AppConfiguration.swift */; };
 		C5102DA72FA4E8BB003F63AC /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5102DA62FA4E8B8003F63AC /* AppTheme.swift */; };
+		C560F12A2FA66AE900CE823A /* FloatingMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = C560F1292FA66AE200CE823A /* FloatingMenu.swift */; };
+		C560F12C2FA66AF600CE823A /* StartupOffline.swift in Sources */ = {isa = PBXBuildFile; fileRef = C560F12B2FA66AF200CE823A /* StartupOffline.swift */; };
+		C560F12E2FA66B0100CE823A /* BrandingPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C560F12D2FA66AFE00CE823A /* BrandingPresentation.swift */; };
+		C560F1302FA66B0D00CE823A /* WebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C560F12F2FA66B0900CE823A /* WebView.swift */; };
 		C5B80EF52FA545E300356637 /* InitialSiteSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5B80EF42FA545DF00356637 /* InitialSiteSelectionViewController.swift */; };
 		C5EE1A1E2FA23F9C00D7DBBF /* MyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5EE1A1D2FA23F9C00D7DBBF /* MyViewController.swift */; };
 		C5EE1A202FA27D1800D7DBBF /* nativeAssetStore.js in Resources */ = {isa = PBXBuildFile; fileRef = C5EE1A1F2FA27D1800D7DBBF /* nativeAssetStore.js */; };
@@ -46,6 +50,10 @@
 		C5102DA22FA41878003F63AC /* Authenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Authenticator.swift; sourceTree = "<group>"; };
 		C5102DA42FA4E38E003F63AC /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
 		C5102DA62FA4E8B8003F63AC /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
+		C560F1292FA66AE200CE823A /* FloatingMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingMenu.swift; sourceTree = "<group>"; };
+		C560F12B2FA66AF200CE823A /* StartupOffline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartupOffline.swift; sourceTree = "<group>"; };
+		C560F12D2FA66AFE00CE823A /* BrandingPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandingPresentation.swift; sourceTree = "<group>"; };
+		C560F12F2FA66B0900CE823A /* WebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebView.swift; sourceTree = "<group>"; };
 		C5B80EF42FA545DF00356637 /* InitialSiteSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitialSiteSelectionViewController.swift; sourceTree = "<group>"; };
 		C5EE1A1D2FA23F9C00D7DBBF /* MyViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyViewController.swift; sourceTree = "<group>"; };
 		C5EE1A1F2FA27D1800D7DBBF /* nativeAssetStore.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = nativeAssetStore.js; sourceTree = "<group>"; };
@@ -92,6 +100,10 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				C560F12F2FA66B0900CE823A /* WebView.swift */,
+				C560F12D2FA66AFE00CE823A /* BrandingPresentation.swift */,
+				C560F12B2FA66AF200CE823A /* StartupOffline.swift */,
+				C560F1292FA66AE200CE823A /* FloatingMenu.swift */,
 				C5B80EF42FA545DF00356637 /* InitialSiteSelectionViewController.swift */,
 				C5102DA62FA4E8B8003F63AC /* AppTheme.swift */,
 				C5102DA42FA4E38E003F63AC /* AppConfiguration.swift */,
@@ -208,14 +220,18 @@
 				C5102DA32FA4187F003F63AC /* Authenticator.swift in Sources */,
 				C5EE1A252FA2A3C900D7DBBF /* ScormPlayerViewController.swift in Sources */,
 				C5102DA72FA4E8BB003F63AC /* AppTheme.swift in Sources */,
+				C560F12C2FA66AF600CE823A /* StartupOffline.swift in Sources */,
 				C5EE1A1E2FA23F9C00D7DBBF /* MyViewController.swift in Sources */,
 				C5EE1A2D2FA2C81500D7DBBF /* ScormCourseListViewController.swift in Sources */,
 				C5EE1A312FA2CE0F00D7DBBF /* HelpViewController.swift in Sources */,
 				C5102DA52FA4E391003F63AC /* AppConfiguration.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				C560F12A2FA66AE900CE823A /* FloatingMenu.swift in Sources */,
 				C5EE1A292FA2A43100D7DBBF /* ScormAPIShim.swift in Sources */,
 				C5EE1A2B2FA2C3E500D7DBBF /* ScormLessonListViewController.swift in Sources */,
 				C5EE1A2F2FA2CD6200D7DBBF /* SettingsViewController.swift in Sources */,
+				C560F1302FA66B0D00CE823A /* WebView.swift in Sources */,
+				C560F12E2FA66B0100CE823A /* BrandingPresentation.swift in Sources */,
 				C5EE1A332FA3855700D7DBBF /* ScormProgressStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
