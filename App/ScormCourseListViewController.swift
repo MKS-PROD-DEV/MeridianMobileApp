@@ -145,17 +145,14 @@ final class ScormCourseListViewController: UITableViewController {
     return cell
   }
 
-  @objc private func infoButtonTapped(_ sender: UIButton) {
-    let course = courses[sender.tag]
-
-    let alert = UIAlertController(
-      title: course.title,
-      message: "Course info view will be added here.",
-      preferredStyle: .alert
-    )
-    alert.addAction(UIAlertAction(title: "OK", style: .default))
-    present(alert, animated: true)
-  }
+    @objc private func infoButtonTapped(_ sender: UIButton) {
+      let course = courses[sender.tag]
+      let viewController = CourseInfoViewController(course: course)
+      let nav = UINavigationController(rootViewController: viewController)
+      AppTheme.applyNavigationBarAppearance(to: nav)
+      nav.modalPresentationStyle = .pageSheet
+      present(nav, animated: true)
+    }
 
   override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
     guard !courses.isEmpty else { return }

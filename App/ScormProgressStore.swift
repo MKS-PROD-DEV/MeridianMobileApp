@@ -1,3 +1,8 @@
+/*
+  Progress controller.
+  - Handles storing course progress
+  - DB Error handling
+*/
 import Foundation
 import SQLite3
 
@@ -491,4 +496,31 @@ final class ScormProgressStore {
       }
     }
   }
+
+    func lastAccessedDate(for assetId: String) -> Date? {
+      let sql = ScormProgressStoreSQL.loadLastAccessedAt
+      var statement: OpaquePointer?
+
+      guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+        print("SQLite prepare last accessed error:", String(cString: sqlite3_errmsg(database)))
+        return nil
+      }
+
+      defer { sqlite3_finalize(statement) }
+
+      sqlite3_bind_text(statement, 1, (assetId as NSString).utf8String, -1, nil)
+
+      guard sqlite3_step(statement) == SQLITE_ROW else {
+        return nil
+      }
+
+      if sqlite3_column_type(statement, 0) == SQLITE_NULL {
+        return nil
+      }
+
+      let timestamp = sqlite3_column_double(statement, 0)
+      guard timestamp > 0 else { return nil }
+
+      return Date(timeIntervalSince1970: timestamp)
+    }
 }

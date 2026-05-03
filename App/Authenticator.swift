@@ -1,3 +1,7 @@
+/*
+  Authentication controller.
+  - Biometrics handling with passcode fallback
+*/
 import LocalAuthentication
 
 enum AuthError: Error {

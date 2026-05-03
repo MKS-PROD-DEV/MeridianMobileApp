@@ -18,6 +18,7 @@
 		C5102DA32FA4187F003F63AC /* Authenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5102DA22FA41878003F63AC /* Authenticator.swift */; };
 		C5102DA52FA4E391003F63AC /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5102DA42FA4E38E003F63AC /* AppConfiguration.swift */; };
 		C5102DA72FA4E8BB003F63AC /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5102DA62FA4E8B8003F63AC /* AppTheme.swift */; };
+		C522770B2FA7FF03009A1C4C /* CourseInfoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C522770A2FA7FEEE009A1C4C /* CourseInfoViewController.swift */; };
 		C55E94772FA7B91B008E687D /* NotificationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C55E94762FA7B907008E687D /* NotificationController.swift */; };
 		C560F12A2FA66AE900CE823A /* FloatingMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = C560F1292FA66AE200CE823A /* FloatingMenu.swift */; };
 		C560F12C2FA66AF600CE823A /* StartupOffline.swift in Sources */ = {isa = PBXBuildFile; fileRef = C560F12B2FA66AF200CE823A /* StartupOffline.swift */; };
@@ -53,6 +54,7 @@
 		C5102DA22FA41878003F63AC /* Authenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Authenticator.swift; sourceTree = "<group>"; };
 		C5102DA42FA4E38E003F63AC /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
 		C5102DA62FA4E8B8003F63AC /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
+		C522770A2FA7FEEE009A1C4C /* CourseInfoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseInfoViewController.swift; sourceTree = "<group>"; };
 		C55E94762FA7B907008E687D /* NotificationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationController.swift; sourceTree = "<group>"; };
 		C560F1292FA66AE200CE823A /* FloatingMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingMenu.swift; sourceTree = "<group>"; };
 		C560F12B2FA66AF200CE823A /* StartupOffline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartupOffline.swift; sourceTree = "<group>"; };
@@ -106,6 +108,7 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				C522770A2FA7FEEE009A1C4C /* CourseInfoViewController.swift */,
 				C55E94762FA7B907008E687D /* NotificationController.swift */,
 				C560F13B2FA685B200CE823A /* ReportBugViewController.swift */,
 				C560F1392FA67FF500CE823A /* ScormProgressStoreSQL.swift */,
@@ -264,6 +267,7 @@
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				C560F12A2FA66AE900CE823A /* FloatingMenu.swift in Sources */,
 				C560F13A2FA67FFA00CE823A /* ScormProgressStoreSQL.swift in Sources */,
+				C522770B2FA7FF03009A1C4C /* CourseInfoViewController.swift in Sources */,
 				C5EE1A292FA2A43100D7DBBF /* ScormAPIShim.swift in Sources */,
 				C5EE1A2B2FA2C3E500D7DBBF /* ScormLessonListViewController.swift in Sources */,
 				C5EE1A2F2FA2CD6200D7DBBF /* SettingsViewController.swift in Sources */,

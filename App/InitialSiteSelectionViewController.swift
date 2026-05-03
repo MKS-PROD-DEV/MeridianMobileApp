@@ -1,3 +1,7 @@
+/*
+  Site Selection controller.
+  - Site Selector
+*/
 import UIKit
 
 final class InitialSiteSelectionViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {

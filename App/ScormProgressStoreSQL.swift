@@ -1,3 +1,7 @@
+/*
+  Script Repo.
+  - SQL Queries
+*/
 import Foundation
 
 enum ScormProgressStoreSQL {
@@ -115,6 +119,11 @@ enum ScormProgressStoreSQL {
     WHERE asset_id = ?;
     """
 
+  static let loadLastAccessedAt = """
+    SELECT MAX(updated_at)
+    FROM sco_progress
+    WHERE asset_id = ?;
+    """
   static let deleteDownloadedCourse = "DELETE FROM downloaded_courses WHERE asset_id = ?;"
   static let deleteCourseFiles = "DELETE FROM course_files WHERE asset_id = ?;"
   static let deleteCourseProgress = "DELETE FROM sco_progress WHERE asset_id = ?;"

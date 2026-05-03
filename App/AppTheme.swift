@@ -1,3 +1,9 @@
+/*
+  Styling Configuration File.
+  - Declare switching between clients
+  - Set colors
+  - Declare short string for clients
+*/
 import UIKit
 
 enum AppTheme {

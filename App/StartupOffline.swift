@@ -1,3 +1,9 @@
+/*
+  Loading and Startup Controller.
+  - Handles network check
+  - Loads files
+  - Bridge between modes
+*/
 import UIKit
 
 extension MyViewController {

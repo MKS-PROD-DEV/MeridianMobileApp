@@ -1,3 +1,10 @@
+/*
+  App Configuration File.
+  - Declared clients
+  - Declared Display Names
+  - Declare Host and Launch URLS
+  - Configs for Biometrics
+*/
 import Foundation
 
 enum Branding: String, CaseIterable {
