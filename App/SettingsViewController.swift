@@ -34,6 +34,7 @@ final class SettingsViewController: UITableViewController {
 
   private enum PreferencesRow: Int, CaseIterable {
     case notifications
+    case testNotifications
     case darkMode
   }
 
@@ -74,15 +75,6 @@ final class SettingsViewController: UITableViewController {
     control.addTarget(self, action: #selector(notificationsChanged(_:)), for: .valueChanged)
     return control
   }()
-    private lazy var testNotificationsFooterButton: UIButton = {
-      let button = UIButton(type: .system)
-      var config = UIButton.Configuration.borderedTinted()
-      config.title = "Test Notifications"
-      config.buttonSize = .small
-      button.configuration = config
-      button.addTarget(self, action: #selector(testNotificationsFooterTapped), for: .touchUpInside)
-      return button
-    }()
 
   init(onBrandingChanged: ((Branding) -> Void)? = nil) {
     self.onBrandingChanged = onBrandingChanged
@@ -145,7 +137,7 @@ final class SettingsViewController: UITableViewController {
       }
     }
 
-    @objc private func testNotificationsFooterTapped() {
+    private func sendTestNotification() {
       guard notificationsSwitch.isOn else {
         let alert = UIAlertController(
           title: "Notifications Disabled",
@@ -216,41 +208,6 @@ final class SettingsViewController: UITableViewController {
       return "Need help or want to report a problem?\n\n\(appVersionText)"
     }
   }
-    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-      guard let section = Section(rawValue: section) else { return nil }
-
-      switch section {
-      case .preferences:
-        let container = UIView()
-
-        let button = testNotificationsFooterButton
-        button.translatesAutoresizingMaskIntoConstraints = false
-
-        container.addSubview(button)
-
-        NSLayoutConstraint.activate([
-          button.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
-          button.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
-          button.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -4)
-        ])
-
-        return container
-
-      default:
-        return nil
-      }
-    }
-
-    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-      guard let section = Section(rawValue: section) else { return UITableView.automaticDimension }
-
-      switch section {
-      case .preferences:
-        return 52
-      default:
-        return UITableView.automaticDimension
-      }
-    }
 
   override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     guard let section = Section(rawValue: indexPath.section) else {
@@ -289,6 +246,13 @@ final class SettingsViewController: UITableViewController {
         cell.accessoryView = notificationsSwitch
         cell.selectionStyle = .none
 
+      case .testNotifications:
+        content.text = "Test Notifications"
+        content.secondaryText = "Send a local test notification"
+        cell.contentConfiguration = content
+        cell.accessoryType = .disclosureIndicator
+        cell.selectionStyle = .default
+
       case .darkMode:
         content.text = "Dark Mode (Beta)"
         content.secondaryText = "Use dark appearance throughout the app"
@@ -323,7 +287,14 @@ final class SettingsViewController: UITableViewController {
       showOrganizationPicker()
 
     case .preferences:
-      break
+      guard let row = PreferencesRow(rawValue: indexPath.row) else { return }
+
+      switch row {
+      case .notifications, .darkMode:
+        break
+      case .testNotifications:
+        sendTestNotification()
+      }
 
     case .storage:
       confirmClearAllDownloadedContent()
