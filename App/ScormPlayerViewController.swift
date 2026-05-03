@@ -1,16 +1,16 @@
 /*
- Native SCORM playback screen.
- - creating and hosting a dedicated `WKWebView`
- - injecting the SCORM API shim JavaScript
- - loading the selected lesson
- - handling JS/native messages for SCORM storage
- - serving SCORM files through a custom URL scheme
- - supporting popup content
- - showing save-state feedback during autosave
- - surfacing save/score-related playback errors to the user
- SCORM content is loaded using:
- scorm://localhost/...
- */
+  Native SCORM playback screen.
+  - creating and hosting a dedicated `WKWebView`
+  - injecting the SCORM API shim JavaScript
+  - loading the selected lesson
+  - handling JS/native messages for SCORM storage
+  - serving SCORM files through a custom URL scheme
+  - supporting popup content
+  - showing save-state feedback during autosave
+  - surfacing save/score-related playback errors to the user
+  SCORM content is loaded using:
+  scorm://localhost/...
+*/
 import UIKit
 import UniformTypeIdentifiers
 import WebKit
@@ -367,29 +367,27 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
     decisionHandler(.allow)
   }
 
-  func webView(
-    _ webView: WKWebView,
-    createWebViewWith configuration: WKWebViewConfiguration,
-    for navigationAction: WKNavigationAction,
-    windowFeatures: WKWindowFeatures
-  ) -> WKWebView? {
-    let popupConfig = makeWebViewConfiguration()
-    let popupWebView = WKWebView(frame: .zero, configuration: popupConfig)
-    popupWebView.navigationDelegate = self
-    popupWebView.uiDelegate = self
+    func webView(
+      _ webView: WKWebView,
+      createWebViewWith configuration: WKWebViewConfiguration,
+      for navigationAction: WKNavigationAction,
+      windowFeatures: WKWindowFeatures
+    ) -> WKWebView? {
+      let popupWebView = WKWebView(frame: .zero, configuration: configuration)
+      popupWebView.navigationDelegate = self
+      popupWebView.uiDelegate = self
 
-    let popupVC = PopupWebViewController(popupWebView: popupWebView)
-    let nav = UINavigationController(rootViewController: popupVC)
-    nav.modalPresentationStyle = .pageSheet
-    present(nav, animated: true)
+      let popupVC = PopupWebViewController(popupWebView: popupWebView)
+      let nav = UINavigationController(rootViewController: popupVC)
+      nav.modalPresentationStyle = .pageSheet
+      present(nav, animated: true)
 
-    if let url = navigationAction.request.url {
-      print("SCORM popup URL:", url.absoluteString)
-      popupWebView.load(URLRequest(url: url))
+      if let url = navigationAction.request.url {
+        print("SCORM popup URL:", url.absoluteString)
+      }
+
+      return popupWebView
     }
-
-    return popupWebView
-  }
 
   func userContentController(
     _ userContentController: WKUserContentController,

@@ -1,14 +1,12 @@
 /*
- Main Capacitor bridge controller.
- - hosting the main Capacitor webview
- - injecting helper JavaScript into the main webview
- - receiving JavaScript messages from the web app
- - managing online/offline mode
- - handling connectivity changes
- - presenting offline course and SCORM flows
+  Main Capacitor bridge controller.
+  - hosting the main Capacitor webview
+  - injecting helper JavaScript into the main webview
+  - receiving JavaScript messages from the web app
+  - managing online/offline mode
+  - handling connectivity changes
+  - presenting offline course and SCORM flows
 */
- 
- 
 import Capacitor
 import Foundation
 import Network

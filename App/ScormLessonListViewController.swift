@@ -1,9 +1,9 @@
 /*
- Native screen that displays lessons/SCOs for a selected SCORM course.
- - listing lessons from the parsed SCORM manifest
- - resolving the launch file for a selected SCO
- - opening the SCORM player
- */
+  Native screen that displays lessons/SCOs for a selected SCORM course.
+  - listing lessons from the parsed SCORM manifest
+  - resolving the launch file for a selected SCO
+  - opening the SCORM player
+*/
 import UIKit
 
 final class ScormLessonListViewController: UITableViewController {

@@ -1,7 +1,7 @@
 /*
- Native help screen for offline learning support.
- - providing user guidance for downloads, playback, and troubleshooting
- */
+  Native help screen for offline learning support.
+  - providing user guidance for downloads, playback, and troubleshooting
+*/
 import UIKit
 
 final class HelpViewController: UIViewController {
