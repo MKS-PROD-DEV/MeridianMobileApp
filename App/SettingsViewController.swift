@@ -259,7 +259,7 @@ final class SettingsViewController: UITableViewController {
         cell.selectionStyle = .default
 
       case .darkMode:
-        content.text = "Dark Mode (Beta)"
+        content.text = "Dark Mode"
         content.secondaryText = "Use dark appearance throughout the app"
         cell.contentConfiguration = content
         cell.accessoryView = darkModeSwitch

@@ -30,7 +30,7 @@ enum Branding: String, CaseIterable {
   var hostDisplayName: String {
     switch self {
     case .meridian: return "sandbox7.mksi-lms.net"
-    case .psi: return "psiadmin.mkscloud.com/support"
+    case .psi: return "psiadmin.mkscloud.com"
     case .adc: return "adc-admin.mkscloud.com"
     case .cov: return "covlc.virginia.gov"
     case .vabc: return "vabc.mkscloud.com"
@@ -42,7 +42,7 @@ enum Branding: String, CaseIterable {
     case .meridian:
       return URL(string: "https://sandbox7.mksi-lms.net")!
     case .psi:
-      return URL(string: "https://psiadmin.mkscloud.com/support")!
+      return URL(string: "https://psiadmin.mkscloud.com")!
     case .adc:
       return URL(string: "https://adc-admin.mkscloud.com")!
     case .cov:
