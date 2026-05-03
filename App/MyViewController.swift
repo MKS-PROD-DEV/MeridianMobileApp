@@ -105,7 +105,7 @@ final class MyViewController: CAPBridgeViewController, WKUIDelegate, WKNavigatio
   let startupOverlay: UIView = {
     let view = UIView()
     view.translatesAutoresizingMaskIntoConstraints = false
-    view.backgroundColor = .white
+    view.backgroundColor = .systemBackground
     return view
   }()
 
