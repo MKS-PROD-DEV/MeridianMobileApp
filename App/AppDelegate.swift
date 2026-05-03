@@ -21,6 +21,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     print(
       "FOLDER PATH IS: \(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.path)"
     )
+      let isDarkModeEnabled = UserDefaults.standard.bool(forKey: "settings.appearance.darkMode.enabled")
+      let style: UIUserInterfaceStyle = isDarkModeEnabled ? .dark : .light
+
+      UIApplication.shared.connectedScenes
+        .compactMap { $0 as? UIWindowScene }
+        .flatMap { $0.windows }
+        .forEach { $0.overrideUserInterfaceStyle = style }
     NotificationController.shared.configure()
     return true
   }

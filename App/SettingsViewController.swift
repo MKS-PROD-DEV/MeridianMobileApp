@@ -34,6 +34,7 @@ final class SettingsViewController: UITableViewController {
 
   private enum PreferencesRow: Int, CaseIterable {
     case notifications
+    case darkMode
   }
 
   private enum StorageRow: Int, CaseIterable {
@@ -45,7 +46,26 @@ final class SettingsViewController: UITableViewController {
   }
 
   private let notificationsKey = "settings.notifications.enabled"
+  private let darkModeKey = "settings.appearance.darkMode.enabled"
   private let onBrandingChanged: ((Branding) -> Void)?
+
+    private lazy var darkModeSwitch: UISwitch = {
+      let control = UISwitch()
+      control.onTintColor = AppTheme.accentColor
+      control.isOn = UserDefaults.standard.bool(forKey: darkModeKey)
+      control.addTarget(self, action: #selector(darkModeChanged(_:)), for: .valueChanged)
+      return control
+    }()
+
+    private func applySavedAppearance() {
+      let isDarkModeEnabled = UserDefaults.standard.bool(forKey: darkModeKey)
+      let style: UIUserInterfaceStyle = isDarkModeEnabled ? .dark : .light
+
+      UIApplication.shared.connectedScenes
+        .compactMap { $0 as? UIWindowScene }
+        .flatMap { $0.windows }
+        .forEach { $0.overrideUserInterfaceStyle = style }
+    }
 
   private lazy var notificationsSwitch: UISwitch = {
     let control = UISwitch()
@@ -57,7 +77,7 @@ final class SettingsViewController: UITableViewController {
     private lazy var testNotificationsFooterButton: UIButton = {
       let button = UIButton(type: .system)
       var config = UIButton.Configuration.borderedTinted()
-      config.title = "TEST"
+      config.title = "Test Notifications"
       config.buttonSize = .small
       button.configuration = config
       button.addTarget(self, action: #selector(testNotificationsFooterTapped), for: .touchUpInside)
@@ -91,6 +111,7 @@ final class SettingsViewController: UITableViewController {
     )
 
     AppTheme.applyNavigationBarAppearance(to: navigationController)
+    applySavedAppearance()
   }
     override func viewWillAppear(_ animated: Bool) {
       super.viewWillAppear(animated)
@@ -100,6 +121,21 @@ final class SettingsViewController: UITableViewController {
   @objc private func close() {
     dismiss(animated: true)
   }
+
+    @objc private func darkModeChanged(_ sender: UISwitch) {
+      UserDefaults.standard.set(sender.isOn, forKey: darkModeKey)
+
+      let style: UIUserInterfaceStyle = sender.isOn ? .dark : .light
+
+      if let windowScene = view.window?.windowScene {
+        windowScene.windows.forEach { $0.overrideUserInterfaceStyle = style }
+      } else {
+        UIApplication.shared.connectedScenes
+          .compactMap { $0 as? UIWindowScene }
+          .flatMap { $0.windows }
+          .forEach { $0.overrideUserInterfaceStyle = style }
+      }
+    }
 
     @objc private func notificationsChanged(_ sender: UISwitch) {
       NotificationController.shared.updateNotificationPreference(enabled: sender.isOn)
@@ -243,11 +279,23 @@ final class SettingsViewController: UITableViewController {
       cell.accessoryType = .disclosureIndicator
 
     case .preferences:
-      content.text = "Notifications"
-      content.secondaryText = "Manage app-level notifications"
-      cell.contentConfiguration = content
-      cell.accessoryView = notificationsSwitch
-      cell.selectionStyle = .none
+      guard let row = PreferencesRow(rawValue: indexPath.row) else { break }
+
+      switch row {
+      case .notifications:
+        content.text = "Notifications"
+        content.secondaryText = "Manage app-level notifications"
+        cell.contentConfiguration = content
+        cell.accessoryView = notificationsSwitch
+        cell.selectionStyle = .none
+
+      case .darkMode:
+        content.text = "Dark Mode (Beta)"
+        content.secondaryText = "Use dark appearance throughout the app"
+        cell.contentConfiguration = content
+        cell.accessoryView = darkModeSwitch
+        cell.selectionStyle = .none
+      }
 
     case .storage:
       content.text = "Clear Downloaded Content"
