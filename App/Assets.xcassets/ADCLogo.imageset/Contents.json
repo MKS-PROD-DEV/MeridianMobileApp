@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "images (2).png",
+      "filename" : "1-Photoroom.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "images (2) 1.png",
+      "filename" : "1-Photoroom 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "images (2) 2.png",
+      "filename" : "1-Photoroom 2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
