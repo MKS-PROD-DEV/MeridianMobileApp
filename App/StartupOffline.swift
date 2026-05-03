@@ -304,7 +304,7 @@ extension MyViewController {
     let courses = ScormUtils.loadAllCourses()
     let courseListVC = ScormCourseListViewController(courses: courses)
     let nav = UINavigationController(rootViewController: courseListVC)
-    nav.setNavigationBarHidden(true, animated: false)
+    nav.setNavigationBarHidden(false, animated: false)
 
     addChild(nav)
     offlineCoursesContainerView.addSubview(nav.view)
@@ -325,7 +325,7 @@ extension MyViewController {
     let courses = ScormUtils.loadAllCourses()
     let courseListVC = ScormCourseListViewController(courses: courses)
     embeddedOfflineCourseListNavController?.setViewControllers([courseListVC], animated: false)
-    embeddedOfflineCourseListNavController?.setNavigationBarHidden(true, animated: false)
+    embeddedOfflineCourseListNavController?.setNavigationBarHidden(false, animated: false)
   }
 
   func completeStartupOverlayDismissalIfNeeded() {
