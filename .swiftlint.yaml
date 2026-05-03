@@ -19,3 +19,10 @@ opt_in_rules:
 
 indentation_width:
   indentation_width: 2
+
+excluded:
+  - .build
+  - Package.swift
+  - Pods
+  - Carthage
+  - Source/ExcludedFolder

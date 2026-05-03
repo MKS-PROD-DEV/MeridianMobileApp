@@ -16,10 +16,11 @@ private final class ScormURLSchemeHandler: NSObject, WKURLSchemeHandler {
     guard let requestURL else {
       urlSchemeTask.didFailWithError(
         NSError(
-          domain: "ScormScheme", code: 400,
-          userInfo: [
-            NSLocalizedDescriptionKey: "Missing request URL"
-          ]))
+          domain: "ScormScheme",
+          code: 400,
+          userInfo: [NSLocalizedDescriptionKey: "Missing request URL"]
+        )
+      )
       return
     }
 
@@ -71,10 +72,10 @@ private final class ScormURLSchemeHandler: NSObject, WKURLSchemeHandler {
 
     guard resolvedPath.hasPrefix(rootPath) else {
       throw NSError(
-        domain: "ScormScheme", code: 403,
-        userInfo: [
-          NSLocalizedDescriptionKey: "Path escapes SCORM root"
-        ])
+        domain: "ScormScheme",
+        code: 403,
+        userInfo: [NSLocalizedDescriptionKey: "Path escapes SCORM root"]
+      )
     }
 
     return resolvedURL
@@ -108,7 +109,8 @@ private final class ScormURLSchemeHandler: NSObject, WKURLSchemeHandler {
   }
 
   private func textEncodingName(for mimeType: String) -> String? {
-    if mimeType.hasPrefix("text/") || mimeType == "application/javascript"
+    if mimeType.hasPrefix("text/")
+      || mimeType == "application/javascript"
       || mimeType == "application/json" {
       return "utf-8"
     }
@@ -116,8 +118,7 @@ private final class ScormURLSchemeHandler: NSObject, WKURLSchemeHandler {
   }
 }
 
-final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler, WKUIDelegate,
-  WKNavigationDelegate {
+final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler, WKUIDelegate, WKNavigationDelegate {
   private let injectedJS: String
   private let launchFileURL: URL
   private let readAccessURL: URL
@@ -125,13 +126,17 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
   private let scoId: String
   private lazy var schemeHandler = ScormURLSchemeHandler(rootDirectoryURL: readAccessURL)
 
+  private var saveStatusButton: UIButton?
+  private var hideSaveStatusWorkItem: DispatchWorkItem?
+  private var hasShownScoreWarning = false
+
   private lazy var webView: WKWebView = {
     let config = makeWebViewConfiguration()
 
     let webView = WKWebView(frame: .zero, configuration: config)
-      webView.allowsBackForwardNavigationGestures = true
-      webView.uiDelegate = self
-      webView.navigationDelegate = self
+    webView.allowsBackForwardNavigationGestures = true
+    webView.uiDelegate = self
+    webView.navigationDelegate = self
     return webView
   }()
 
@@ -148,10 +153,12 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
     self.readAccessURL = readAccessURL
     self.injectedJS = injectedJS
     super.init(nibName: nil, bundle: nil)
-    self.title = "SCORM"
+    title = "SCORM"
   }
 
-  required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
 
   private func makeWebViewConfiguration() -> WKWebViewConfiguration {
     let config = WKWebViewConfiguration()
@@ -184,6 +191,8 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
       action: #selector(close)
     )
 
+    configureSaveStatusIndicator()
+
     view.addSubview(webView)
     webView.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
@@ -195,6 +204,60 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
 
     loadScormContent()
   }
+
+    private func configureSaveStatusIndicator() {
+      let button = UIButton(type: .system)
+      button.setImage(UIImage(systemName: "square.and.arrow.down"), for: .normal)
+      button.tintColor = AppTheme.accentColor
+      button.alpha = 0
+      button.transform = CGAffineTransform(scaleX: 0.82, y: 0.82)
+      button.isUserInteractionEnabled = false
+      saveStatusButton = button
+      navigationItem.rightBarButtonItem = UIBarButtonItem(customView: button)
+    }
+
+    private func showAutosaveCompleteIndicator() {
+      guard let button = saveStatusButton else { return }
+
+      hideSaveStatusWorkItem?.cancel()
+
+      button.setImage(UIImage(systemName: "square.and.arrow.down"), for: .normal)
+      button.tintColor = AppTheme.accentColor
+      button.alpha = 0
+      button.transform = CGAffineTransform(scaleX: 0.82, y: 0.82)
+
+      UIView.animate(
+        withDuration: 0.18,
+        delay: 0,
+        usingSpringWithDamping: 0.75,
+        initialSpringVelocity: 0.5,
+        options: [.curveEaseOut]
+      ) {
+        button.alpha = 1
+        button.transform = .identity
+      }
+
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+        UIView.transition(
+          with: button,
+          duration: 0.2,
+          options: .transitionCrossDissolve
+        ) {
+          button.setImage(UIImage(systemName: "externaldrive.fill.badge.checkmark"), for: .normal)
+          button.tintColor = AppTheme.primaryColor
+        }
+      }
+
+      let workItem = DispatchWorkItem { [weak button] in
+        UIView.animate(withDuration: 0.25) {
+          button?.alpha = 0
+          button?.transform = CGAffineTransform(scaleX: 0.82, y: 0.82)
+        }
+      }
+
+      hideSaveStatusWorkItem = workItem
+      DispatchQueue.main.asyncAfter(deadline: .now() + 1.3, execute: workItem)
+    }
 
   private func loadScormContent() {
     if let scormURL = customSchemeURL(for: launchFileURL) {
@@ -220,8 +283,7 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
       relativePath.removeFirst()
     }
 
-    let encodedPath =
-      relativePath
+    let encodedPath = relativePath
       .split(separator: "/", omittingEmptySubsequences: false)
       .map { segment in
         String(segment).addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
@@ -232,34 +294,45 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
     return URL(string: "scorm://localhost/\(encodedPath)")
   }
 
-  @objc private func close() { dismiss(animated: true) }
+  private func inspectScoreDataIfNeeded(cmiObject: [String: Any]) {
+    guard !hasShownScoreWarning else { return }
 
-  func webView(
-    _ webView: WKWebView,
-    didStartProvisionalNavigation navigation: WKNavigation!
-  ) {
+    if let rawScore = cmiObject["cmi.core.score.raw"] as? String,
+      !rawScore.isEmpty,
+      Double(rawScore) == nil {
+      hasShownScoreWarning = true
+      presentAlert(
+        title: "Score Unavailable",
+        message: "We couldn't read the lesson score information for this course."
+      )
+    }
+  }
+
+  private func presentAlert(title: String, message: String) {
+    guard presentedViewController == nil else { return }
+
+    let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+    alert.addAction(UIAlertAction(title: "OK", style: .default))
+    present(alert, animated: true)
+  }
+
+  @objc private func close() {
+    dismiss(animated: true)
+  }
+
+  func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
     print("SCORM didStartProvisionalNavigation:", webView.url?.absoluteString ?? "nil")
   }
 
-  func webView(
-    _ webView: WKWebView,
-    didCommit navigation: WKNavigation!
-  ) {
+  func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
     print("SCORM didCommit:", webView.url?.absoluteString ?? "nil")
   }
 
-  func webView(
-    _ webView: WKWebView,
-    didFinish navigation: WKNavigation!
-  ) {
+  func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
     print("SCORM didFinish:", webView.url?.absoluteString ?? "nil")
   }
 
-  func webView(
-    _ webView: WKWebView,
-    didFail navigation: WKNavigation!,
-    withError error: Error
-  ) {
+  func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
     print("SCORM didFail:", error.localizedDescription)
   }
 
@@ -305,53 +378,74 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
     return popupWebView
   }
 
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-      print("SCORM script message:", message.name)
-      guard message.name == "scormStore" else { return }
-      guard let body = message.body as? [String: Any],
-        let opr = body["op"] as? String
-      else {
-        print("SCORM message body was invalid")
+  func userContentController(
+    _ userContentController: WKUserContentController,
+    didReceive message: WKScriptMessage
+  ) {
+    print("SCORM script message:", message.name)
+
+    guard message.name == "scormStore" else { return }
+    guard let body = message.body as? [String: Any],
+      let opr = body["op"] as? String
+    else {
+      print("SCORM message body was invalid")
+      return
+    }
+
+    print("SCORM operation:", opr)
+
+    switch opr {
+    case "load":
+      let json = ScormProgressStore.shared.loadCMI(assetId: assetId, scoId: scoId) ?? "{}"
+      let jscript = "window.__scormNativeStoreLoad && window.__scormNativeStoreLoad(\(json));"
+      webView.evaluateJavaScript(jscript) { _, error in
+        if let error = error {
+          print("SCORM load JS inject error:", error.localizedDescription)
+        } else {
+          print("SCORM load JS inject success:", self.assetId, self.scoId)
+        }
+      }
+
+    case "save":
+      print("SCORM save received for asset:", assetId, "sco:", scoId)
+
+      guard let cmiObj = body["cmi"] else {
+        print("SCORM save missing cmi payload")
+        self.presentAlert(
+          title: "Progress Save Error",
+          message: "The lesson progress could not be saved correctly."
+        )
         return
       }
 
-      print("SCORM operation:", opr)
-
-      switch opr {
-      case "load":
-        let json = ScormProgressStore.shared.loadCMI(assetId: assetId, scoId: scoId) ?? "{}"
-        let jscript = "window.__scormNativeStoreLoad && window.__scormNativeStoreLoad(\(json));"
-        webView.evaluateJavaScript(jscript) { _, error in
-          if let error = error {
-            print("SCORM load JS inject error:", error.localizedDescription)
-          } else {
-            print("SCORM load JS inject success:", self.assetId, self.scoId)
-          }
-        }
-
-      case "save":
-        print("SCORM save received for asset:", assetId, "sco:", scoId)
-
-        guard let cmiObj = body["cmi"] else {
-          print("SCORM save missing cmi payload")
+      do {
+        let data = try JSONSerialization.data(withJSONObject: cmiObj, options: [])
+        guard let json = String(data: data, encoding: .utf8) else {
+          print("SCORM save failed to encode JSON string")
+          self.presentAlert(
+            title: "Progress Save Error",
+            message: "The lesson progress could not be saved correctly."
+          )
           return
         }
 
-        do {
-          let data = try JSONSerialization.data(withJSONObject: cmiObj, options: [])
-          guard let json = String(data: data, encoding: .utf8) else {
-            print("SCORM save failed to encode JSON string")
-            return
-          }
-
-          print("SCORM save payload:", json)
-          ScormProgressStore.shared.saveCMI(assetId: assetId, scoId: scoId, cmiJSON: json)
-        } catch {
-          print("SCORM save JSON serialization error:", error.localizedDescription)
+        if let cmiDictionary = cmiObj as? [String: Any] {
+          inspectScoreDataIfNeeded(cmiObject: cmiDictionary)
         }
 
-      default:
-        print("SCORM unknown operation:", opr)
+        print("SCORM save payload:", json)
+        ScormProgressStore.shared.saveCMI(assetId: assetId, scoId: scoId, cmiJSON: json)
+        showAutosaveCompleteIndicator()
+      } catch {
+        print("SCORM save JSON serialization error:", error.localizedDescription)
+        self.presentAlert(
+          title: "Progress Save Error",
+          message: "The lesson progress could not be saved correctly."
+        )
       }
+
+    default:
+      print("SCORM unknown operation:", opr)
     }
+  }
 }
