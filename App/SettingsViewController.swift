@@ -1,3 +1,12 @@
+/*
+ Native settings screen.
+ - organization/site selection
+ - app preferences
+ - clearing downloaded SCORM content
+ - showing local asset storage size
+ - displaying app version/build information
+ - entry point to bug reporting
+ */
 import UIKit
 
 final class SettingsViewController: UITableViewController {

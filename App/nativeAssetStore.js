@@ -1,4 +1,18 @@
- (function () {
+/*
+ JavaScript helper for local asset operations.
+ Functions include:
+ - downloading files
+ - saving asset metadata
+ - reading asset metadata
+ - saving progress metadata
+ - reading progress metadata
+ - storing last launch state
+
+Uses Capacitor plugins such as:
+ - `Filesystem`
+ - `Preferences`
+*/
+(function () {
    const { Filesystem, Directory } = Capacitor.Plugins;
    const { Preferences } = Capacitor.Plugins;
 

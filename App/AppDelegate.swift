@@ -1,3 +1,10 @@
+/*
+Standard iOS app entry point.
+ - app startup
+ - Capacitor URL handling hooks
+ - debug logging for app Documents path
+ 
+ */
 import Capacitor
 import UIKit
 

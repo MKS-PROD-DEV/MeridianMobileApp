@@ -1,3 +1,8 @@
+/*
+ Native bug reporting screen.
+ - collecting issue details from the user
+ - supporting screenshots and diagnostic details
+ */
 import UIKit
 import MessageUI
 import PhotosUI

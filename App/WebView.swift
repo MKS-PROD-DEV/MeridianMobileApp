@@ -1,3 +1,9 @@
+/*
+ Native modal controller used for popup windows.
+ - hosting popup `WKWebView` instances
+ - presenting popup content modally
+ - allowing the user to close popup windows
+ */
 import UIKit
 import WebKit
 

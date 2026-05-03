@@ -1,3 +1,16 @@
+/*
+ Native SCORM playback screen.
+ - creating and hosting a dedicated `WKWebView`
+ - injecting the SCORM API shim JavaScript
+ - loading the selected lesson
+ - handling JS/native messages for SCORM storage
+ - serving SCORM files through a custom URL scheme
+ - supporting popup content
+ - showing save-state feedback during autosave
+ - surfacing save/score-related playback errors to the user
+ SCORM content is loaded using:
+ scorm://localhost/...
+ */
 import UIKit
 import UniformTypeIdentifiers
 import WebKit

@@ -1,3 +1,18 @@
+/*
+ Injected JavaScript that provides the SCORM runtime bridge.
+ - implementing the SCORM API methods used by offline content
+ - exposing LMS-style APIs such as:
+   - `LMSInitialize`
+   - `LMSFinish`
+   - `LMSCommit`
+   - `LMSGetValue`
+   - `LMSSetValue`
+ - loading saved learner state from native storage
+ - saving updated learner state back to native storage
+ - installing the API across frames/windows
+ - auto-persisting progress periodically
+ This is the layer that allows offline SCORM content to function correctly without an LMS backend.
+*/
 import Foundation
 
 enum ScormAPIShim {

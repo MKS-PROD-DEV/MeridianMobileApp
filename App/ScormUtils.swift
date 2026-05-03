@@ -1,3 +1,16 @@
+/*
+ Utility layer for SCORM storage and parsing.
+ - resolving the app Documents directory
+ - managing `assets/{assetId}`
+ - saving downloaded ZIP files
+ - unzipping SCORM packages
+ - finding `imsmanifest.xml`
+ - parsing the SCORM manifest
+ - building course and lesson models
+ - indexing extracted course files
+ - deleting downloaded courses
+ - calculating local asset storage size
+ */
 import Foundation
 import UniformTypeIdentifiers
 import ZIPFoundation

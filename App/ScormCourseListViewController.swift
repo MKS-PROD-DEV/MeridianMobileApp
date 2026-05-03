@@ -1,3 +1,12 @@
+/*
+ Native screen that displays available offline SCORM courses.
+ - rendering the list of downloaded courses
+ - showing course progress state
+ - supporting pull-to-refresh
+ - supporting swipe-to-delete for full course removal
+ - exposing a placeholder course info action
+ - navigating to the lesson list for a selected course
+ */
 import UIKit
 
 final class ScormCourseListViewController: UITableViewController {
