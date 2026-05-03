@@ -22,6 +22,12 @@ struct CourseFileRecord {
   let updatedAt: TimeInterval
 }
 
+enum CourseProgressStatus: String {
+  case started = "Started"
+  case inProgress = "In Progress"
+  case completed = "Completed"
+}
+
 final class ScormProgressStore {
   static let shared = ScormProgressStore()
 
@@ -390,7 +396,7 @@ final class ScormProgressStore {
   }
 
   func deleteDownloadedCourse(assetId: String) {
-    let sql = ScormProgressStoreSQL.deleteDownloadedCourse(assetId: assetId)
+    let sql = ScormProgressStoreSQL.deleteDownloadedCourse
     var statement: OpaquePointer?
 
     guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
@@ -408,7 +414,7 @@ final class ScormProgressStore {
   }
 
   func deleteCourseFiles(assetId: String) {
-    let sql = ScormProgressStoreSQL.deleteCourseFiles(assetId: assetId)
+    let sql = ScormProgressStoreSQL.deleteCourseFiles
     var statement: OpaquePointer?
 
     guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
@@ -423,6 +429,56 @@ final class ScormProgressStore {
     if sqlite3_step(statement) != SQLITE_DONE {
       print("SQLite delete course files error:", String(cString: sqlite3_errmsg(database)))
     }
+  }
+
+  func deleteCourseProgress(assetId: String) {
+    let sql = ScormProgressStoreSQL.deleteCourseProgress
+    var statement: OpaquePointer?
+
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      print("SQLite prepare delete course progress error:", String(cString: sqlite3_errmsg(database)))
+      return
+    }
+
+    defer { sqlite3_finalize(statement) }
+
+    sqlite3_bind_text(statement, 1, (assetId as NSString).utf8String, -1, nil)
+
+    if sqlite3_step(statement) != SQLITE_DONE {
+      print("SQLite delete course progress error:", String(cString: sqlite3_errmsg(database)))
+    }
+  }
+
+  func progressStatus(for assetId: String) -> CourseProgressStatus? {
+    let sql = ScormProgressStoreSQL.loadCourseProgressRows
+    var statement: OpaquePointer?
+    var foundAnyProgress = false
+    var foundCompleted = false
+
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      print("SQLite prepare load course progress rows error:", String(cString: sqlite3_errmsg(database)))
+      return nil
+    }
+
+    defer { sqlite3_finalize(statement) }
+
+    sqlite3_bind_text(statement, 1, (assetId as NSString).utf8String, -1, nil)
+
+    while sqlite3_step(statement) == SQLITE_ROW {
+      guard let cString = sqlite3_column_text(statement, 0) else { continue }
+      foundAnyProgress = true
+
+      let json = String(cString: cString).lowercased()
+      if json.contains("\"cmi.core.lesson_status\":\"completed\"")
+        || json.contains("\"cmi.core.lesson_status\":\"passed\"")
+        || json.contains("\"lesson_status\":\"completed\"")
+        || json.contains("\"lesson_status\":\"passed\"") {
+        foundCompleted = true
+      }
+    }
+
+    guard foundAnyProgress else { return nil }
+    return foundCompleted ? .completed : .inProgress
   }
 
   func clearAll() {

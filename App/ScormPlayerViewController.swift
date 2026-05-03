@@ -305,32 +305,53 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
     return popupWebView
   }
 
-  func userContentController(
-    _ userContentController: WKUserContentController,
-    didReceive message: WKScriptMessage
-  ) {
-    print("SCORM script message:", message.name)
-
-    guard message.name == "scormStore" else { return }
-    guard let body = message.body as? [String: Any],
-      let ops = body["op"] as? String
-    else { return }
-
-    switch ops {
-    case "load":
-      let json = ScormProgressStore.shared.loadCMI(assetId: assetId, scoId: scoId) ?? "{}"
-      let jscript = "window.__scormNativeStoreLoad && window.__scormNativeStoreLoad(\(json));"
-      webView.evaluateJavaScript(jscript, completionHandler: nil)
-
-    case "save":
-      if let cmiObj = body["cmi"],
-        let data = try? JSONSerialization.data(withJSONObject: cmiObj, options: []),
-        let json = String(data: data, encoding: .utf8) {
-        ScormProgressStore.shared.saveCMI(assetId: assetId, scoId: scoId, cmiJSON: json)
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+      print("SCORM script message:", message.name)
+      guard message.name == "scormStore" else { return }
+      guard let body = message.body as? [String: Any],
+        let opr = body["op"] as? String
+      else {
+        print("SCORM message body was invalid")
+        return
       }
 
-    default:
-      break
+      print("SCORM operation:", opr)
+
+      switch opr {
+      case "load":
+        let json = ScormProgressStore.shared.loadCMI(assetId: assetId, scoId: scoId) ?? "{}"
+        let jscript = "window.__scormNativeStoreLoad && window.__scormNativeStoreLoad(\(json));"
+        webView.evaluateJavaScript(jscript) { _, error in
+          if let error = error {
+            print("SCORM load JS inject error:", error.localizedDescription)
+          } else {
+            print("SCORM load JS inject success:", self.assetId, self.scoId)
+          }
+        }
+
+      case "save":
+        print("SCORM save received for asset:", assetId, "sco:", scoId)
+
+        guard let cmiObj = body["cmi"] else {
+          print("SCORM save missing cmi payload")
+          return
+        }
+
+        do {
+          let data = try JSONSerialization.data(withJSONObject: cmiObj, options: [])
+          guard let json = String(data: data, encoding: .utf8) else {
+            print("SCORM save failed to encode JSON string")
+            return
+          }
+
+          print("SCORM save payload:", json)
+          ScormProgressStore.shared.saveCMI(assetId: assetId, scoId: scoId, cmiJSON: json)
+        } catch {
+          print("SCORM save JSON serialization error:", error.localizedDescription)
+        }
+
+      default:
+        print("SCORM unknown operation:", opr)
+      }
     }
-  }
 }

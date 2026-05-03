@@ -272,6 +272,59 @@ final class ScormUtils {
 
     return nil
   }
+    static func deleteCourse(assetId: String) throws {
+      let fileManager = FileManager.default
+      let assetURL = ScormUtils.assetBaseURL(assetId: assetId)
+
+      if fileManager.fileExists(atPath: assetURL.path) {
+        try fileManager.removeItem(at: assetURL)
+      }
+
+      ScormProgressStore.shared.deleteCourseFiles(assetId: assetId)
+      ScormProgressStore.shared.deleteDownloadedCourse(assetId: assetId)
+      ScormProgressStore.shared.deleteCourseProgress(assetId: assetId)
+    }
+
+    static func assetsFolderSizeInBytes() -> Int64 {
+      folderSizeInBytes(at: ScormUtils.assetsRootURL())
+    }
+
+    static func formattedAssetsFolderSize() -> String {
+      let formatter = ByteCountFormatter()
+      formatter.allowedUnits = [.useKB, .useMB, .useGB]
+      formatter.countStyle = .file
+      return formatter.string(fromByteCount: assetsFolderSizeInBytes())
+    }
+
+    static func folderSizeInBytes(at url: URL) -> Int64 {
+      let fileManager = FileManager.default
+      guard fileManager.fileExists(atPath: url.path) else { return 0 }
+
+      let keys: Set<URLResourceKey> = [.isRegularFileKey, .fileSizeKey]
+      guard let enumerator = fileManager.enumerator(
+        at: url,
+        includingPropertiesForKeys: Array(keys),
+        options: [.skipsHiddenFiles]
+      ) else {
+        return 0
+      }
+
+      var totalSize: Int64 = 0
+
+      for case let fileURL as URL in enumerator {
+        guard
+          let values = try? fileURL.resourceValues(forKeys: keys),
+          values.isRegularFile == true,
+          let fileSize = values.fileSize
+        else {
+          continue
+        }
+
+        totalSize += Int64(fileSize)
+      }
+
+      return totalSize
+    }
 }
 
 private final class ManifestParser: NSObject, XMLParserDelegate {

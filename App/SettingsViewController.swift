@@ -8,6 +8,16 @@ final class SettingsViewController: UITableViewController {
     case support
   }
 
+    private var assetsSizeText: String {
+      ScormUtils.formattedAssetsFolderSize()
+    }
+
+    private var appVersionText: String {
+      let bundle = Bundle.main
+      let version = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown"
+      let build = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "Unknown"
+      return "Version \(version) (\(build))"
+    }
   private enum OrganizationRow: Int, CaseIterable {
     case site
   }
@@ -63,6 +73,10 @@ final class SettingsViewController: UITableViewController {
 
     AppTheme.applyNavigationBarAppearance(to: navigationController)
   }
+    override func viewWillAppear(_ animated: Bool) {
+      super.viewWillAppear(animated)
+      tableView.reloadData()
+    }
 
   @objc private func close() {
     dismiss(animated: true)
@@ -117,7 +131,7 @@ final class SettingsViewController: UITableViewController {
     case .storage:
       return "Downloaded SCORM content is stored locally on this device."
     case .support:
-      return "Need help or want to report a problem?"
+      return "Need help or want to report a problem?\n\n\(appVersionText)"
     }
   }
 
@@ -156,7 +170,7 @@ final class SettingsViewController: UITableViewController {
 
     case .storage:
       content.text = "Clear Downloaded Content"
-      content.secondaryText = "Remove all saved offline courses"
+      content.secondaryText = "Remove all saved offline courses • \(assetsSizeText)"
       content.textProperties.color = AppTheme.destructiveColor
       cell.contentConfiguration = content
 
@@ -261,6 +275,7 @@ final class SettingsViewController: UITableViewController {
       )
       success.addAction(UIAlertAction(title: "OK", style: .default))
       present(success, animated: true)
+      self.tableView.reloadData()
     } catch {
       let failure = UIAlertController(
         title: "Error",

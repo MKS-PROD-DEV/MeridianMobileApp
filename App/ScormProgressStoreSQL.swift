@@ -109,13 +109,15 @@ enum ScormProgressStoreSQL {
     ORDER BY relative_path ASC;
     """
 
-  static func deleteDownloadedCourse(assetId: String) -> String {
-    "DELETE FROM downloaded_courses WHERE asset_id = ?;"
-  }
+  static let loadCourseProgressRows = """
+    SELECT cmi_json
+    FROM sco_progress
+    WHERE asset_id = ?;
+    """
 
-  static func deleteCourseFiles(assetId: String) -> String {
-    "DELETE FROM course_files WHERE asset_id = ?;"
-  }
+  static let deleteDownloadedCourse = "DELETE FROM downloaded_courses WHERE asset_id = ?;"
+  static let deleteCourseFiles = "DELETE FROM course_files WHERE asset_id = ?;"
+  static let deleteCourseProgress = "DELETE FROM sco_progress WHERE asset_id = ?;"
 
   static func alterTableAddColumn(table: String, column: String, definition: String) -> String {
     "ALTER TABLE \(table) ADD COLUMN \(column) \(definition);"
