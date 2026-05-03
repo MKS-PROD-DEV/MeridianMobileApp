@@ -19,4 +19,3 @@ opt_in_rules:
 
 indentation_width:
   indentation_width: 2
-  severity: warning
