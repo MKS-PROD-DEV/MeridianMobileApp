@@ -28,6 +28,11 @@ final class SettingsViewController: UITableViewController {
       return "Version \(version) (\(build))"
     }
 
+    private var copyrightText: String {
+      let year = Calendar.current.component(.year, from: Date())
+      return "© \(year) Meridian Knowledge Solutions."
+    }
+
   private enum OrganizationRow: Int, CaseIterable {
     case site
   }
@@ -205,7 +210,7 @@ final class SettingsViewController: UITableViewController {
     case .storage:
       return "Downloaded SCORM content is stored locally on this device."
     case .support:
-      return "Need help or want to report a problem?\n\n\(appVersionText)"
+      return "Need help or want to report a problem?\n\n\(appVersionText)\n\(copyrightText)"
     }
   }
 
