@@ -27,6 +27,7 @@ final class SettingsViewController: UITableViewController {
       let build = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "Unknown"
       return "Version \(version) (\(build))"
     }
+
   private enum OrganizationRow: Int, CaseIterable {
     case site
   }
@@ -53,6 +54,15 @@ final class SettingsViewController: UITableViewController {
     control.addTarget(self, action: #selector(notificationsChanged(_:)), for: .valueChanged)
     return control
   }()
+    private lazy var testNotificationsFooterButton: UIButton = {
+      let button = UIButton(type: .system)
+      var config = UIButton.Configuration.borderedTinted()
+      config.title = "TEST"
+      config.buttonSize = .small
+      button.configuration = config
+      button.addTarget(self, action: #selector(testNotificationsFooterTapped), for: .touchUpInside)
+      return button
+    }()
 
   init(onBrandingChanged: ((Branding) -> Void)? = nil) {
     self.onBrandingChanged = onBrandingChanged
@@ -91,9 +101,36 @@ final class SettingsViewController: UITableViewController {
     dismiss(animated: true)
   }
 
-  @objc private func notificationsChanged(_ sender: UISwitch) {
-    UserDefaults.standard.set(sender.isOn, forKey: notificationsKey)
-  }
+    @objc private func notificationsChanged(_ sender: UISwitch) {
+      NotificationController.shared.updateNotificationPreference(enabled: sender.isOn)
+
+      if sender.isOn {
+        NotificationController.shared.requestAuthorizationIfNeeded()
+      }
+    }
+
+    @objc private func testNotificationsFooterTapped() {
+      guard notificationsSwitch.isOn else {
+        let alert = UIAlertController(
+          title: "Notifications Disabled",
+          message: "Turn on notifications first to send a test notification.",
+          preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+        return
+      }
+
+      dismiss(animated: true) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+          NotificationController.shared.scheduleSimpleNotification(
+            title: "Test Notification",
+            body: "Notifications are working correctly.",
+            timeInterval: 2
+          )
+        }
+      }
+    }
 
   override func numberOfSections(in tableView: UITableView) -> Int {
     Section.allCases.count
@@ -136,13 +173,48 @@ final class SettingsViewController: UITableViewController {
     case .organization:
       return "Choose which organization site and branding the app should use."
     case .preferences:
-      return "Manage app-level preferences."
+      return nil
     case .storage:
       return "Downloaded SCORM content is stored locally on this device."
     case .support:
       return "Need help or want to report a problem?\n\n\(appVersionText)"
     }
   }
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+      guard let section = Section(rawValue: section) else { return nil }
+
+      switch section {
+      case .preferences:
+        let container = UIView()
+
+        let button = testNotificationsFooterButton
+        button.translatesAutoresizingMaskIntoConstraints = false
+
+        container.addSubview(button)
+
+        NSLayoutConstraint.activate([
+          button.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
+          button.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
+          button.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -4)
+        ])
+
+        return container
+
+      default:
+        return nil
+      }
+    }
+
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+      guard let section = Section(rawValue: section) else { return UITableView.automaticDimension }
+
+      switch section {
+      case .preferences:
+        return 52
+      default:
+        return UITableView.automaticDimension
+      }
+    }
 
   override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     guard let section = Section(rawValue: indexPath.section) else {
@@ -172,7 +244,7 @@ final class SettingsViewController: UITableViewController {
 
     case .preferences:
       content.text = "Notifications"
-      content.secondaryText = nil
+      content.secondaryText = "Manage app-level notifications"
       cell.contentConfiguration = content
       cell.accessoryView = notificationsSwitch
       cell.selectionStyle = .none

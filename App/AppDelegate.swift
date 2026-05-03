@@ -9,7 +9,6 @@ import UIKit
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
-
   var window: UIWindow?
 
   func application(
@@ -22,7 +21,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     print(
       "FOLDER PATH IS: \(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.path)"
     )
-
+    NotificationController.shared.configure()
     return true
   }
 
