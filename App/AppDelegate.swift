@@ -16,8 +16,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     // Override point for customization after application launch.
-
-    // THIS PRINTS YOUR APP'S EXACT SIMULATOR FOLDER PATH
+    // Prints simulator path for local debugging.
     print(
       "FOLDER PATH IS: \(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.path)"
     )
@@ -53,8 +52,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
   func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
     // Called when the app was launched with an activity, including Universal Links.
-    // Feel free to add additional processing here, but if you want the App API to support
-    // tracking app url opens, make sure to keep this call
+    // Feel free to add additional processing here, but if we want the App API to support
+    // App store tracking is done here I think. Leave this
     return ApplicationDelegateProxy.shared.application(
       application, continue: userActivity, restorationHandler: restorationHandler)
   }

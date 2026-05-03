@@ -94,38 +94,6 @@ final class NotificationController: NSObject {
     }
   }
 
-    func scheduleSummarizedNotification(
-      title: String,
-      body: String,
-      identifier: String = UUID().uuidString,
-      threadIdentifier: String,
-      timeInterval: TimeInterval = 1
-    ) {
-    guard notificationsEnabled else { return }
-
-    requestAuthorizationIfNeeded { granted in
-      guard granted else { return }
-
-      let content = UNMutableNotificationContent()
-      content.title = title
-      content.body = body
-      content.sound = .default
-      content.threadIdentifier = threadIdentifier
-      content.interruptionLevel = .passive
-
-      let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, timeInterval), repeats: false)
-      let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
-
-      self.center.add(request) { error in
-        if let error = error {
-          print("Failed to schedule summarized notification:", error.localizedDescription)
-        } else {
-          print("Scheduled summarized notification:", identifier)
-        }
-      }
-    }
-  }
-
   func clearAllPendingAndDeliveredNotifications() {
     center.removeAllPendingNotificationRequests()
     center.removeAllDeliveredNotifications()
