@@ -66,7 +66,7 @@
 "settings.notifications.subtitle" = "Manage app-level notifications";
 "settings.test_notifications" = "Test Notifications";
 "settings.test_notifications.subtitle" = "Send a local test notification";
-"settings.dark_mode" = "Dark Mode (Beta)";
+"settings.dark_mode" = "Dark Mode";
 "settings.dark_mode.subtitle" = "Use dark appearance throughout the app";
 "settings.clear_downloaded_content" = "Clear Downloaded Content";
 "settings.clear_downloaded_content.subtitle" = "Remove all saved offline courses • %@";
