@@ -20,6 +20,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     print(
       "FOLDER PATH IS: \(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.path)"
     )
+      AppLogStore.shared.log(
+        "App launched. Documents path: \(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.path)"
+      )
       let isDarkModeEnabled = UserDefaults.standard.bool(forKey: "settings.appearance.darkMode.enabled")
       let style: UIUserInterfaceStyle = isDarkModeEnabled ? .dark : .light
 

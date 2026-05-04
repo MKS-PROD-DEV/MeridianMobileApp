@@ -198,21 +198,94 @@ final class SettingsViewController: UITableViewController {
       return "Support"
     }
   }
+    // Update this later (CPY SCORM)
+    override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+      guard let section = Section(rawValue: section) else { return nil }
 
-  override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-    guard let section = Section(rawValue: section) else { return nil }
-
-    switch section {
-    case .organization:
-      return "Choose which organization site and branding the app should use."
-    case .preferences:
-      return nil
-    case .storage:
-      return "Downloaded SCORM content is stored locally on this device."
-    case .support:
-      return "Need help or want to report a problem?\n\n\(appVersionText)\n\(copyrightText)"
+      switch section {
+      case .organization:
+        return "Choose which organization site and branding the app should use."
+      case .preferences:
+        return nil
+      case .storage:
+        return "Downloaded SCORM content is stored locally on this device."
+      case .support:
+        return nil
+      }
     }
-  }
+
+    // Update this later (CPY SCORM)
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+      guard let section = Section(rawValue: section) else { return nil }
+
+      switch section {
+      case .support:
+        let container = UIView()
+
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 8
+        stack.translatesAutoresizingMaskIntoConstraints = false
+
+        let messageLabel = UILabel()
+        messageLabel.text = "Need help or want to report a problem?"
+        messageLabel.font = AppTheme.secondaryFont
+        messageLabel.textColor = AppTheme.secondaryTextColor
+        messageLabel.numberOfLines = 0
+
+        let versionLabel = UILabel()
+        versionLabel.text = appVersionText
+        versionLabel.font = AppTheme.secondaryFont
+        versionLabel.textColor = AppTheme.secondaryTextColor
+        versionLabel.numberOfLines = 0
+
+        let copyrightButton = UIButton(type: .system)
+        copyrightButton.setTitle(copyrightText, for: .normal)
+        copyrightButton.setTitleColor(AppTheme.secondaryTextColor, for: .normal)
+        copyrightButton.titleLabel?.font = AppTheme.secondaryFont
+        copyrightButton.contentHorizontalAlignment = .left
+
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleCopyrightLongPress(_:)))
+        longPress.minimumPressDuration = 2.0
+        copyrightButton.addGestureRecognizer(longPress)
+
+        stack.addArrangedSubview(messageLabel)
+        stack.addArrangedSubview(versionLabel)
+        stack.addArrangedSubview(copyrightButton)
+
+        container.addSubview(stack)
+
+        NSLayoutConstraint.activate([
+          stack.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
+          stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
+          stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
+          stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8)
+        ])
+
+        return container
+
+      default:
+        return nil
+      }
+    }
+
+    // Update this later (CPY SCORM)
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+      guard let section = Section(rawValue: section) else { return UITableView.automaticDimension }
+
+      switch section {
+      case .support:
+        return 100
+      default:
+        return UITableView.automaticDimension
+      }
+    }
+
+    // Remove this later (CPY SCORM)
+    @objc private func handleCopyrightLongPress(_ gesture: UILongPressGestureRecognizer) {
+      guard gesture.state == .began else { return }
+      seedBundledCourses()
+    }
 
   override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     guard let section = Section(rawValue: indexPath.section) else {
@@ -358,6 +431,81 @@ final class SettingsViewController: UITableViewController {
 
     present(alert, animated: true)
   }
+
+    // Remove this later (CPY SCORM)
+    private func seedBundledCourses() {
+      guard let resourceURL = Bundle.main.resourceURL else {
+        let alert = UIAlertController(
+          title: "Load Failed",
+          message: "Could not access bundled app resources.",
+          preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+        return
+      }
+
+      let fileManager = FileManager.default
+      var seededCount = 0
+      var failedFiles: [String] = []
+
+      guard let enumerator = fileManager.enumerator(
+        at: resourceURL,
+        includingPropertiesForKeys: [.isRegularFileKey],
+        options: [.skipsHiddenFiles]
+      ) else {
+        let alert = UIAlertController(
+          title: "Load Failed",
+          message: "Could not enumerate bundled resources.",
+          preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+        return
+      }
+
+      for case let fileURL as URL in enumerator {
+        guard fileURL.pathExtension.lowercased() == "zip" else { continue }
+
+        let filename = fileURL.lastPathComponent
+        let assetId = fileURL.deletingPathExtension().lastPathComponent
+
+        do {
+          try? ScormUtils.deleteCourse(assetId: assetId)
+
+          let data = try Data(contentsOf: fileURL)
+          try ScormUtils.replaceDownloadedZip(
+            assetId: assetId,
+            filename: filename,
+            data: data
+          )
+
+          seededCount += 1
+        } catch {
+          failedFiles.append(filename)
+          print("Failed to seed \(filename):", error)
+        }
+      }
+
+      let message: String
+      if seededCount == 0 {
+        message = "No bundled zip files were found."
+      } else if failedFiles.isEmpty {
+        message = "\(seededCount) bundled course(s) copied to local storage."
+      } else {
+        message = "\(seededCount) bundled course(s) copied.\nFailed: \(failedFiles.joined(separator: ", "))"
+      }
+
+      let alert = UIAlertController(
+        title: "Demo Courses Loaded",
+        message: message,
+        preferredStyle: .alert
+      )
+      alert.addAction(UIAlertAction(title: "OK", style: .default))
+      present(alert, animated: true)
+
+      tableView.reloadData()
+    }
 
   private func clearAllDownloadedContent() {
     let fileManager = FileManager.default

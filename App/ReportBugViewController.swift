@@ -796,16 +796,37 @@ extension ReportBugViewController: MFMailComposeViewControllerDelegate {
   }
 }
 
-private final class AppLogStore {
+// Log handler for Report Bug
+final class AppLogStore {
   static let shared = AppLogStore()
+
+  private let queue = DispatchQueue(label: "AppLogStore.queue", qos: .utility)
+  private var entries: [String] = []
+  private let maxEntries = 500
 
   private init() {}
 
+  func log(_ message: String) {
+    let timestamp = ISO8601DateFormatter().string(from: Date())
+    let line = "[\(timestamp)] \(message)"
+
+    queue.sync {
+      entries.append(line)
+
+      if entries.count > maxEntries {
+        entries.removeFirst(entries.count - maxEntries)
+      }
+    }
+
+    print(line)
+  }
+
   func exportLogs() -> String {
-    """
-    No integrated logger is currently connected.
-    Replace AppLogStore.exportLogs() with your real rolling app log output.
-    Timestamp: \(ISO8601DateFormatter().string(from: Date()))
-    """
+    queue.sync {
+      if entries.isEmpty {
+        return "[\(ISO8601DateFormatter().string(from: Date()))] No logs captured yet."
+      }
+      return entries.joined(separator: "\n")
+    }
   }
 }

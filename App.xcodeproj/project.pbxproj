@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 60;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -75,6 +75,11 @@
 		C5EE1A322FA3854500D7DBBF /* ScormProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScormProgressStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		C522770C2FA821A6009A1C4C /* BundledCourses */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BundledCourses; sourceTree = "<group>"; };
+		C52277172FA8D70F009A1C4C /* Localization */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Localization; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		504EC3011FED79650016851F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -108,6 +113,8 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				C52277172FA8D70F009A1C4C /* Localization */,
+				C522770C2FA821A6009A1C4C /* BundledCourses */,
 				C522770A2FA7FEEE009A1C4C /* CourseInfoViewController.swift */,
 				C55E94762FA7B907008E687D /* NotificationController.swift */,
 				C560F13B2FA685B200CE823A /* ReportBugViewController.swift */,
@@ -157,6 +164,10 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C522770C2FA821A6009A1C4C /* BundledCourses */,
+				C52277172FA8D70F009A1C4C /* Localization */,
 			);
 			name = App;
 			packageProductDependencies = (

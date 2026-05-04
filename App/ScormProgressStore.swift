@@ -58,6 +58,7 @@ final class ScormProgressStore {
   private func openDatabase() {
     let path = databaseURL().path
     print("SQLite DB path:", path)
+    AppLogStore.shared.log("SQLite DB path: \(path)")
 
     if sqlite3_open(path, &database) != SQLITE_OK {
       print("SQLite open error:", String(cString: sqlite3_errmsg(database)))
@@ -160,6 +161,7 @@ final class ScormProgressStore {
     }
 
     print("SQLite load miss:", assetId, scoId)
+    AppLogStore.shared.log("SQLite load miss: \(assetId) \(scoId)")
     return nil
   }
 
@@ -185,6 +187,7 @@ final class ScormProgressStore {
       print("SQLite save error:", String(cString: sqlite3_errmsg(database)))
     } else {
       print("SQLite save success:", assetId, scoId)
+      AppLogStore.shared.log("SQLite save success: \(assetId) \(scoId)")
     }
   }
 
