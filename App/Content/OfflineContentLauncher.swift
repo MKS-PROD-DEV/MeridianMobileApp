@@ -10,7 +10,11 @@ enum OfflineContentLauncher {
 
     switch item.type {
     case .video:
-      viewController = OfflineVideoPlayerViewController(fileURL: item.fileURL, title: item.title)
+      viewController = OfflineVideoPlayerViewController(
+        assetId: item.assetId,
+        fileURL: item.fileURL,
+        title: item.title
+      )
 
     case .pdf, .document, .web:
       viewController = OfflineDocumentViewController(fileURL: item.fileURL, title: item.title)

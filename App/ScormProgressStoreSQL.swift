@@ -141,4 +141,45 @@ enum ScormProgressStoreSQL {
     "DELETE FROM downloaded_courses;",
     "DELETE FROM course_files;"
   ]
+
+    static let createVideoProgressTable = """
+      CREATE TABLE IF NOT EXISTS video_progress (
+        asset_id TEXT NOT NULL,
+        relative_path TEXT NOT NULL,
+        last_playback_time_seconds REAL NOT NULL,
+        duration_seconds REAL,
+        updated_at REAL NOT NULL,
+        PRIMARY KEY (asset_id, relative_path)
+      );
+      """
+
+    static let upsertVideoProgress = """
+      INSERT INTO video_progress (
+        asset_id,
+        relative_path,
+        last_playback_time_seconds,
+        duration_seconds,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(asset_id, relative_path) DO UPDATE SET
+        last_playback_time_seconds = excluded.last_playback_time_seconds,
+        duration_seconds = excluded.duration_seconds,
+        updated_at = excluded.updated_at;
+      """
+
+    static let loadVideoProgress = """
+      SELECT last_playback_time_seconds, duration_seconds, updated_at
+      FROM video_progress
+      WHERE asset_id = ? AND relative_path = ?;
+      """
+
+    static let deleteVideoProgressForAsset = """
+      DELETE FROM video_progress
+      WHERE asset_id = ?;
+      """
+
+    static let deleteVideoProgressForFile = """
+      DELETE FROM video_progress
+      WHERE asset_id = ? AND relative_path = ?;
+      """
 }

@@ -222,3 +222,7 @@
 "offline_content.type.document" = "Document";
 "offline_content.type.web" = "Web Content";
 "offline_content.type.unsupported" = "Unsupported";
+"offline_video.resume.title" = "Resume Video";
+"offline_video.resume.message" = "Would you like to continue from %@?";
+"offline_video.resume.action" = "Resume";
+"offline_video.start_over.action" = "Start Over";

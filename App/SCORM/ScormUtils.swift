@@ -373,6 +373,7 @@ final class ScormUtils {
       ScormProgressStore.shared.deleteCourseFiles(assetId: assetId)
       ScormProgressStore.shared.deleteDownloadedCourse(assetId: assetId)
       ScormProgressStore.shared.deleteCourseProgress(assetId: assetId)
+      ScormProgressStore.shared.deleteVideoProgress(assetId: assetId)
     }
 
     static func assetsFolderSizeInBytes() -> Int64 {

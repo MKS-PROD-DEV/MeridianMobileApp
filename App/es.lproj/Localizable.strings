@@ -222,3 +222,7 @@
 "offline_content.type.document" = "Documento";
 "offline_content.type.web" = "Contenido web";
 "offline_content.type.unsupported" = "No compatible";
+"offline_video.resume.title" = "Reanudar video";
+"offline_video.resume.message" = "¿Desea continuar desde %@?";
+"offline_video.resume.action" = "Reanudar";
+"offline_video.start_over.action" = "Comenzar de nuevo";

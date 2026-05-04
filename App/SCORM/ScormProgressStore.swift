@@ -27,6 +27,14 @@ struct CourseFileRecord {
   let updatedAt: TimeInterval
 }
 
+struct VideoProgressRecord {
+  let assetId: String
+  let relativePath: String
+  let lastPlaybackTimeSeconds: Double
+  let durationSeconds: Double?
+  let updatedAt: TimeInterval
+}
+
 enum CourseProgressStatus: String {
   case started = "Started"
   case inProgress = "In Progress"
@@ -69,6 +77,7 @@ final class ScormProgressStore {
     createTable(sql: ScormProgressStoreSQL.createScoProgressTable, name: "sco_progress")
     createTable(sql: ScormProgressStoreSQL.createDownloadedCoursesTable, name: "downloaded_courses")
     createTable(sql: ScormProgressStoreSQL.createCourseFilesTable, name: "course_files")
+    createTable(sql: ScormProgressStoreSQL.createVideoProgressTable, name: "video_progress")
   }
 
   private func createTable(sql: String, name: String) {
@@ -525,5 +534,108 @@ final class ScormProgressStore {
       guard timestamp > 0 else { return nil }
 
       return Date(timeIntervalSince1970: timestamp)
+    }
+
+    func saveVideoProgress(
+      assetId: String,
+      relativePath: String,
+      lastPlaybackTimeSeconds: Double,
+      durationSeconds: Double?
+    ) {
+      let sql = ScormProgressStoreSQL.upsertVideoProgress
+      var statement: OpaquePointer?
+
+      guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+        print("SQLite prepare save video progress error:", String(cString: sqlite3_errmsg(database)))
+        return
+      }
+
+      defer { sqlite3_finalize(statement) }
+
+      let now = Date().timeIntervalSince1970
+
+      sqlite3_bind_text(statement, 1, (assetId as NSString).utf8String, -1, nil)
+      sqlite3_bind_text(statement, 2, (relativePath as NSString).utf8String, -1, nil)
+      sqlite3_bind_double(statement, 3, lastPlaybackTimeSeconds)
+
+      if let durationSeconds {
+        sqlite3_bind_double(statement, 4, durationSeconds)
+      } else {
+        sqlite3_bind_null(statement, 4)
+      }
+
+      sqlite3_bind_double(statement, 5, now)
+
+      if sqlite3_step(statement) != SQLITE_DONE {
+        print("SQLite save video progress error:", String(cString: sqlite3_errmsg(database)))
+      }
+    }
+
+    func loadVideoProgress(assetId: String, relativePath: String) -> VideoProgressRecord? {
+      let sql = ScormProgressStoreSQL.loadVideoProgress
+      var statement: OpaquePointer?
+
+      guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+        print("SQLite prepare load video progress error:", String(cString: sqlite3_errmsg(database)))
+        return nil
+      }
+
+      defer { sqlite3_finalize(statement) }
+
+      sqlite3_bind_text(statement, 1, (assetId as NSString).utf8String, -1, nil)
+      sqlite3_bind_text(statement, 2, (relativePath as NSString).utf8String, -1, nil)
+
+      guard sqlite3_step(statement) == SQLITE_ROW else {
+        return nil
+      }
+
+      let lastPlaybackTimeSeconds = sqlite3_column_double(statement, 0)
+      let durationSeconds = sqlite3_column_type(statement, 1) == SQLITE_NULL ? nil : sqlite3_column_double(statement, 1)
+      let updatedAt = sqlite3_column_double(statement, 2)
+
+      return VideoProgressRecord(
+        assetId: assetId,
+        relativePath: relativePath,
+        lastPlaybackTimeSeconds: lastPlaybackTimeSeconds,
+        durationSeconds: durationSeconds,
+        updatedAt: updatedAt
+      )
+    }
+
+    func deleteVideoProgress(assetId: String) {
+      let sql = ScormProgressStoreSQL.deleteVideoProgressForAsset
+      var statement: OpaquePointer?
+
+      guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+        print("SQLite prepare delete video progress error:", String(cString: sqlite3_errmsg(database)))
+        return
+      }
+
+      defer { sqlite3_finalize(statement) }
+
+      sqlite3_bind_text(statement, 1, (assetId as NSString).utf8String, -1, nil)
+
+      if sqlite3_step(statement) != SQLITE_DONE {
+        print("SQLite delete video progress error:", String(cString: sqlite3_errmsg(database)))
+      }
+    }
+
+    func deleteVideoProgress(assetId: String, relativePath: String) {
+      let sql = ScormProgressStoreSQL.deleteVideoProgressForFile
+      var statement: OpaquePointer?
+
+      guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+        print("SQLite prepare delete video progress file error:", String(cString: sqlite3_errmsg(database)))
+        return
+      }
+
+      defer { sqlite3_finalize(statement) }
+
+      sqlite3_bind_text(statement, 1, (assetId as NSString).utf8String, -1, nil)
+      sqlite3_bind_text(statement, 2, (relativePath as NSString).utf8String, -1, nil)
+
+      if sqlite3_step(statement) != SQLITE_DONE {
+        print("SQLite delete video progress file error:", String(cString: sqlite3_errmsg(database)))
+      }
     }
 }
