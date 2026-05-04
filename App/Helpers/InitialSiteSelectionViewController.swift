@@ -1,12 +1,22 @@
 /*
-  Site Selection controller.
-  - Site Selector
+  Initial site onboarding controller.
+  - QR scan
+  - QR image upload
 */
 import UIKit
+import AVFoundation
+import PhotosUI
+import CoreImage
 
-final class InitialSiteSelectionViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+final class InitialSiteSelectionViewController: UIViewController, PHPickerViewControllerDelegate {
   private let onConfirm: (Branding) -> Void
   private var selectedBranding: Branding?
+
+  private let detector = CIDetector(
+    ofType: CIDetectorTypeQRCode,
+    context: nil,
+    options: [CIDetectorAccuracy: CIDetectorAccuracyHigh]
+  )
 
   private let scrollView: UIScrollView = {
     let view = UIScrollView()
@@ -32,25 +42,26 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
 
   private let logoImageView: UIImageView = {
     let imageView = UIImageView(image: UIImage(named: "MGLogo"))
-      imageView.translatesAutoresizingMaskIntoConstraints = false
-      imageView.contentMode = .scaleAspectFit
+    imageView.translatesAutoresizingMaskIntoConstraints = false
+    imageView.contentMode = .scaleAspectFit
     return imageView
   }()
 
   private let titleLabel: UILabel = {
     let label = UILabel()
     label.translatesAutoresizingMaskIntoConstraints = false
-    label.text = AppConfiguration.branding.fullName
+    label.text = L10n.tr("site_selection.qr_only.title")
     label.font = AppTheme.titleFont
     label.textAlignment = .center
     label.textColor = AppTheme.primaryTextColor
+    label.numberOfLines = 0
     return label
   }()
 
   private let subtitleLabel: UILabel = {
     let label = UILabel()
     label.translatesAutoresizingMaskIntoConstraints = false
-    label.text = L10n.tr("site_selection.subtitle")
+    label.text = L10n.tr("site_selection.qr_only.subtitle")
     label.font = AppTheme.bodyFont
     label.textAlignment = .center
     label.textColor = AppTheme.secondaryTextColor
@@ -58,41 +69,31 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
     return label
   }()
 
-  private let listTitleLabel: UILabel = {
-    let label = UILabel()
-    label.translatesAutoresizingMaskIntoConstraints = false
-    label.font = AppTheme.sectionTitleFont
-    label.textColor = AppTheme.primaryTextColor
-    return label
-  }()
-
-  private let cardContainerView: UIView = {
-    let view = UIView()
-    view.translatesAutoresizingMaskIntoConstraints = false
-    view.backgroundColor = AppTheme.cardBackgroundColor
-    view.layer.cornerRadius = AppTheme.largeCornerRadius
-    view.layer.cornerCurve = .continuous
-    return view
-  }()
-
-    private let tableView: UITableView = {
-      let tableView = UITableView(frame: .zero, style: .insetGrouped)
-      tableView.translatesAutoresizingMaskIntoConstraints = false
-      tableView.backgroundColor = .clear
-      tableView.separatorStyle = .singleLine
-      tableView.showsVerticalScrollIndicator = false
-      tableView.isScrollEnabled = true
-      return tableView
-    }()
-
-  private let confirmButton: UIButton = {
+  private let scanQRButton: UIButton = {
     let button = UIButton(type: .system)
     button.translatesAutoresizingMaskIntoConstraints = false
-    button.setTitle(L10n.tr("site_selection.confirm"), for: .normal)
     AppTheme.stylePrimaryButton(button)
-    button.isEnabled = false
-    button.alpha = 0.5
+    button.setTitle(L10n.tr("site_selection.qr.scan"), for: .normal)
     return button
+  }()
+
+  private let uploadQRButton: UIButton = {
+    let button = UIButton(type: .system)
+    button.translatesAutoresizingMaskIntoConstraints = false
+    AppTheme.styleSecondaryButton(button)
+    button.setTitle(L10n.tr("site_selection.qr.upload"), for: .normal)
+    return button
+  }()
+
+  private let helperLabel: UILabel = {
+    let label = UILabel()
+    label.translatesAutoresizingMaskIntoConstraints = false
+    label.text = L10n.tr("site_selection.qr_only.helper")
+    label.font = AppTheme.secondaryFont
+    label.textAlignment = .center
+    label.textColor = AppTheme.secondaryTextColor
+    label.numberOfLines = 0
+    return label
   }()
 
   init(onConfirm: @escaping (Branding) -> Void) {
@@ -109,22 +110,15 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
     super.viewDidLoad()
 
     view.backgroundColor = AppTheme.groupedBackgroundColor
-
-    tableView.dataSource = self
-    tableView.delegate = self
-    tableView.register(UITableViewCell.self, forCellReuseIdentifier: "BrandingCell")
-    tableView.rowHeight = 72
-    tableView.sectionHeaderHeight = 0
-    tableView.sectionFooterHeight = 0
-
-    confirmButton.addTarget(self, action: #selector(confirmTapped), for: .touchUpInside)
-
+    configureMeridianBrandingAppearance()
+    scanQRButton.addTarget(self, action: #selector(scanQRTapped), for: .touchUpInside)
+    uploadQRButton.addTarget(self, action: #selector(uploadQRTapped), for: .touchUpInside)
     setupLayout()
   }
 
-  override func viewDidLayoutSubviews() {
-    super.viewDidLayoutSubviews()
-    tableView.layoutIfNeeded()
+  private func configureMeridianBrandingAppearance() {
+    // Intentionally keep this screen on Meridian branding visuals
+    // until a QR code is successfully scanned and mapped.
   }
 
   private func setupLayout() {
@@ -135,10 +129,9 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
     logoContainerView.addSubview(logoImageView)
     contentView.addSubview(titleLabel)
     contentView.addSubview(subtitleLabel)
-    contentView.addSubview(listTitleLabel)
-    contentView.addSubview(cardContainerView)
-    cardContainerView.addSubview(tableView)
-    contentView.addSubview(confirmButton)
+    contentView.addSubview(scanQRButton)
+    contentView.addSubview(uploadQRButton)
+    contentView.addSubview(helperLabel)
 
     NSLayoutConstraint.activate([
       scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -152,7 +145,7 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
       contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
       contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
 
-      logoContainerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 24),
+      logoContainerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 48),
       logoContainerView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
       logoContainerView.widthAnchor.constraint(equalToConstant: 112),
       logoContainerView.heightAnchor.constraint(equalToConstant: 112),
@@ -162,70 +155,124 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
       logoImageView.widthAnchor.constraint(equalToConstant: 76),
       logoImageView.heightAnchor.constraint(equalToConstant: 76),
 
-      titleLabel.topAnchor.constraint(equalTo: logoContainerView.bottomAnchor, constant: 20),
+      titleLabel.topAnchor.constraint(equalTo: logoContainerView.bottomAnchor, constant: 24),
       titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppTheme.screenHorizontalPadding),
       titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppTheme.screenHorizontalPadding),
 
-      subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
+      subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
       subtitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppTheme.screenHorizontalPadding),
       subtitleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppTheme.screenHorizontalPadding),
 
-      listTitleLabel.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 28),
-      listTitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppTheme.screenHorizontalPadding),
-      listTitleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppTheme.screenHorizontalPadding),
+      scanQRButton.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 32),
+      scanQRButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppTheme.screenHorizontalPadding),
+      scanQRButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppTheme.screenHorizontalPadding),
+      scanQRButton.heightAnchor.constraint(equalToConstant: 54),
 
-      cardContainerView.topAnchor.constraint(equalTo: listTitleLabel.bottomAnchor, constant: 12),
-      cardContainerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-      cardContainerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+      uploadQRButton.topAnchor.constraint(equalTo: scanQRButton.bottomAnchor, constant: 14),
+      uploadQRButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppTheme.screenHorizontalPadding),
+      uploadQRButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppTheme.screenHorizontalPadding),
+      uploadQRButton.heightAnchor.constraint(equalToConstant: 54),
 
-      tableView.topAnchor.constraint(equalTo: cardContainerView.topAnchor, constant: 4),
-      tableView.leadingAnchor.constraint(equalTo: cardContainerView.leadingAnchor),
-      tableView.trailingAnchor.constraint(equalTo: cardContainerView.trailingAnchor),
-      tableView.bottomAnchor.constraint(equalTo: cardContainerView.bottomAnchor, constant: -4),
-      tableView.heightAnchor.constraint(equalToConstant: 320),
-
-      confirmButton.topAnchor.constraint(equalTo: cardContainerView.bottomAnchor, constant: 24),
-      confirmButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppTheme.screenHorizontalPadding),
-      confirmButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppTheme.screenHorizontalPadding),
-      confirmButton.heightAnchor.constraint(equalToConstant: 54),
-      confirmButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -28)
+      helperLabel.topAnchor.constraint(equalTo: uploadQRButton.bottomAnchor, constant: 18),
+      helperLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: AppTheme.screenHorizontalPadding),
+      helperLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -AppTheme.screenHorizontalPadding),
+      helperLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -32)
     ])
   }
 
-  @objc private func confirmTapped() {
-    guard let selectedBranding else { return }
-    onConfirm(selectedBranding)
+  @objc private func scanQRTapped() {
+    let scanner = QRScannerViewController { [weak self] scannedString in
+      self?.handleScannedQRCodeString(scannedString)
+    }
+    present(scanner, animated: true)
   }
 
-  func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-    Branding.allCases.count
+  @objc private func uploadQRTapped() {
+    var configuration = PHPickerConfiguration(photoLibrary: .shared())
+    configuration.filter = .images
+    configuration.selectionLimit = 1
+
+    let picker = PHPickerViewController(configuration: configuration)
+    picker.delegate = self
+    present(picker, animated: true)
   }
 
-  func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    let branding = Branding.allCases[indexPath.row]
-    let cell = tableView.dequeueReusableCell(withIdentifier: "BrandingCell", for: indexPath)
+  func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+    dismiss(animated: true)
 
-    var content = cell.defaultContentConfiguration()
-    content.text = branding.fullName
-    content.secondaryText = branding.hostDisplayName
-    content.textProperties.font = .systemFont(ofSize: 17, weight: .semibold)
-    content.textProperties.color = AppTheme.primaryTextColor
-    content.secondaryTextProperties.font = AppTheme.secondaryFont
-    content.secondaryTextProperties.color = AppTheme.secondaryTextColor
+    guard let result = results.first else { return }
+    guard result.itemProvider.canLoadObject(ofClass: UIImage.self) else {
+      presentGenericQRFailureAlert()
+      return
+    }
 
-    cell.contentConfiguration = content
-    cell.backgroundColor = .clear
-    cell.selectionStyle = .none
-    cell.accessoryType = branding == selectedBranding ? .checkmark : .none
-    cell.tintColor = AppTheme.accentColor
+    result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] object, _ in
+      guard let self = self else { return }
 
-    return cell
+      DispatchQueue.main.async {
+        guard let image = object as? UIImage else {
+          self.presentGenericQRFailureAlert()
+          return
+        }
+
+        guard let scannedString = self.extractQRCodeString(from: image) else {
+          self.presentInvalidQRCodeAlert()
+          return
+        }
+
+        self.handleScannedQRCodeString(scannedString)
+      }
+    }
   }
 
-  func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-    selectedBranding = Branding.allCases[indexPath.row]
-    confirmButton.isEnabled = true
-    confirmButton.alpha = 1.0
-    tableView.reloadData()
+  private func extractQRCodeString(from image: UIImage) -> String? {
+    guard let ciImage = CIImage(image: image),
+          let detector else { return nil }
+
+    let features = detector.features(in: ciImage)
+    let qrFeature = features.compactMap { $0 as? CIQRCodeFeature }.first
+    return qrFeature?.messageString
+  }
+
+  private func handleScannedQRCodeString(_ scannedString: String) {
+    guard let url = URL(string: scannedString),
+          let branding = Branding.from(siteURL: url) else {
+      presentUnknownSiteAlert()
+      return
+    }
+
+    selectedBranding = branding
+    AppConfiguration.branding = branding
+    onConfirm(branding)
+  }
+
+  private func presentUnknownSiteAlert() {
+    let alert = UIAlertController(
+      title: L10n.tr("site_selection.qr.invalid_site.title"),
+      message: L10n.tr("site_selection.qr.invalid_site.message"),
+      preferredStyle: .alert
+    )
+    alert.addAction(UIAlertAction(title: L10n.tr("common.ok"), style: .default))
+    present(alert, animated: true)
+  }
+
+  private func presentInvalidQRCodeAlert() {
+    let alert = UIAlertController(
+      title: L10n.tr("site_selection.qr.invalid_code.title"),
+      message: L10n.tr("site_selection.qr.invalid_code.message"),
+      preferredStyle: .alert
+    )
+    alert.addAction(UIAlertAction(title: L10n.tr("common.ok"), style: .default))
+    present(alert, animated: true)
+  }
+
+  private func presentGenericQRFailureAlert() {
+    let alert = UIAlertController(
+      title: L10n.tr("site_selection.qr.read_failed.title"),
+      message: L10n.tr("site_selection.qr.read_failed.message"),
+      preferredStyle: .alert
+    )
+    alert.addAction(UIAlertAction(title: L10n.tr("common.ok"), style: .default))
+    present(alert, animated: true)
   }
 }

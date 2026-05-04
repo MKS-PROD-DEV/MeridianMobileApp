@@ -60,6 +60,19 @@ enum Branding: String, CaseIterable {
       return URL(string: "https://vabc.mkscloud.com")!
     }
   }
+  static func from(siteURL: URL) -> Branding? {
+    guard let host = normalizedHost(siteURL.host) else { return nil }
+      return Self.allCases.first { branding in
+        normalizedHost(branding.launchURL.host) == host
+      }
+    }
+
+  private static func normalizedHost(_ host: String?) -> String? {
+    guard let host else { return nil }
+      return host
+        .lowercased()
+        .replacingOccurrences(of: "www.", with: "")
+    }
 }
 
 enum AppLanguage: String, CaseIterable {

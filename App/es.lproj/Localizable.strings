@@ -143,8 +143,20 @@
 "report_bug.category.performance" = "Rendimiento";
 "report_bug.category.ui_visual_issue" = "Problema visual / de interfaz";
 
-"site_selection.subtitle" = "Seleccione su organización para continuar.";
-"site_selection.confirm" = "Confirmar selección";
+"site_selection.qr_only.title" = "Configure su sitio";
+"site_selection.qr_only.subtitle" = "Escanee un código QR o cargue una imagen QR para conectar la aplicación con el sitio correcto.";
+"site_selection.qr_only.helper" = "Su código QR debe contener la URL del sitio de su organización.";
+"site_selection.qr.scan" = "Escanear código QR";
+"site_selection.qr.upload" = "Cargar imagen QR";
+"site_selection.qr.scan_instruction" = "Alinee el código QR dentro del marco para escanearlo.";
+"site_selection.qr.camera_unavailable.title" = "Cámara no disponible";
+"site_selection.qr.camera_unavailable.message" = "No se pudo acceder a la cámara en este dispositivo.";
+"site_selection.qr.invalid_site.title" = "Sitio desconocido";
+"site_selection.qr.invalid_site.message" = "El código QR escaneado no coincide con un sitio compatible.";
+"site_selection.qr.invalid_code.title" = "Código QR no válido";
+"site_selection.qr.invalid_code.message" = "No pudimos leer un código QR válido de la imagen seleccionada.";
+"site_selection.qr.read_failed.title" = "Error al importar el QR";
+"site_selection.qr.read_failed.message" = "No se pudo procesar la imagen seleccionada.";
 
 "auth.unlock_reason" = "Desbloquee para acceder a sus cursos";
 
