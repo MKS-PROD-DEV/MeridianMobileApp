@@ -146,7 +146,7 @@ final class MyViewController: CAPBridgeViewController, WKUIDelegate, WKNavigatio
   let loadingStatusLabel: UILabel = {
     let label = UILabel()
     label.translatesAutoresizingMaskIntoConstraints = false
-    label.text = "Starting..."
+    label.text = L10n.tr("startup.starting")
     label.textColor = .darkGray
     label.font = .systemFont(ofSize: 16, weight: .medium)
     label.textAlignment = .center
@@ -156,7 +156,7 @@ final class MyViewController: CAPBridgeViewController, WKUIDelegate, WKNavigatio
   let offlineTitleLabel: UILabel = {
     let label = UILabel()
     label.translatesAutoresizingMaskIntoConstraints = false
-    label.text = "Offline Mode"
+    label.text = L10n.tr("startup.offline_mode")
     label.textColor = .label
     label.font = .systemFont(ofSize: 22, weight: .semibold)
     label.textAlignment = .center
@@ -168,7 +168,7 @@ final class MyViewController: CAPBridgeViewController, WKUIDelegate, WKNavigatio
   let offlineHelpButton: UIButton = {
     let button = UIButton(type: .system)
     button.translatesAutoresizingMaskIntoConstraints = false
-    button.setTitle("Help", for: .normal)
+    button.setTitle(L10n.tr("common.help"), for: .normal)
     button.titleLabel?.font = .systemFont(ofSize: 17, weight: .medium)
     button.alpha = 0
     button.isHidden = true
@@ -178,7 +178,7 @@ final class MyViewController: CAPBridgeViewController, WKUIDelegate, WKNavigatio
   let offlineGoOnlineButton: UIButton = {
     let button = UIButton(type: .system)
     button.translatesAutoresizingMaskIntoConstraints = false
-    button.setTitle("Go Online", for: .normal)
+    button.setTitle(L10n.tr("startup.go_online"), for: .normal)
     button.titleLabel?.font = .systemFont(ofSize: 17, weight: .medium)
     button.alpha = 0
     button.isHidden = true
@@ -188,7 +188,7 @@ final class MyViewController: CAPBridgeViewController, WKUIDelegate, WKNavigatio
   let offlineSettingsButton: UIButton = {
     let button = UIButton(type: .system)
     button.translatesAutoresizingMaskIntoConstraints = false
-    button.setTitle("Settings", for: .normal)
+    button.setTitle(L10n.tr("common.settings"), for: .normal)
     button.titleLabel?.font = .systemFont(ofSize: 17, weight: .medium)
     button.alpha = 0
     button.isHidden = true

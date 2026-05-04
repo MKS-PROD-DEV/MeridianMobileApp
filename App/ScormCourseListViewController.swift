@@ -1,12 +1,3 @@
-/*
-  Native screen that displays available offline SCORM courses.
-  - rendering the list of downloaded courses
-  - showing course progress state
-  - supporting pull-to-refresh
-  - supporting swipe-to-delete for full course removal
-  - exposing a placeholder course info action
-  - navigating to the lesson list for a selected course
-*/
 import UIKit
 
 final class ScormCourseListViewController: UITableViewController {
@@ -48,11 +39,11 @@ final class ScormCourseListViewController: UITableViewController {
   }
 
   override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-    courses.isEmpty ? nil : "Available Offline Courses"
+    courses.isEmpty ? nil : L10n.tr("courses.title")
   }
 
   override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-    courses.isEmpty ? "Download courses while online to access them later in Offline Mode." : nil
+    courses.isEmpty ? L10n.tr("courses.footer.empty") : nil
   }
 
   override func tableView(
@@ -61,7 +52,10 @@ final class ScormCourseListViewController: UITableViewController {
   ) -> UISwipeActionsConfiguration? {
     guard !courses.isEmpty else { return nil }
 
-    let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { [weak self] _, _, completion in
+    let deleteAction = UIContextualAction(
+      style: .destructive,
+      title: L10n.tr("common.delete")
+    ) { [weak self] _, _, completion in
       self?.deleteCourse(at: indexPath, completion: completion)
     }
 
@@ -84,20 +78,20 @@ final class ScormCourseListViewController: UITableViewController {
       }
 
       let alert = UIAlertController(
-        title: "Course Deleted",
-        message: "The downloaded course was removed from this device.",
+        title: L10n.tr("courses.deleted.title"),
+        message: L10n.tr("courses.deleted.message"),
         preferredStyle: .alert
       )
-      alert.addAction(UIAlertAction(title: "OK", style: .default))
+      alert.addAction(UIAlertAction(title: L10n.tr("common.ok"), style: .default))
       present(alert, animated: true)
       completion(true)
     } catch {
       let alert = UIAlertController(
-        title: "Delete Failed",
-        message: "The course could not be deleted.",
+        title: L10n.tr("courses.delete_failed.title"),
+        message: L10n.tr("courses.delete_failed.message"),
         preferredStyle: .alert
       )
-      alert.addAction(UIAlertAction(title: "OK", style: .default))
+      alert.addAction(UIAlertAction(title: L10n.tr("common.ok"), style: .default))
       present(alert, animated: true)
       completion(false)
     }
@@ -108,8 +102,8 @@ final class ScormCourseListViewController: UITableViewController {
     var content = cell.defaultContentConfiguration()
 
     if courses.isEmpty {
-      content.text = "No Downloaded Courses"
-      content.secondaryText = "Courses you download will appear here for offline access."
+      content.text = L10n.tr("courses.empty.title")
+      content.secondaryText = L10n.tr("courses.empty.message")
       content.textProperties.font = .systemFont(ofSize: 17, weight: .semibold)
       content.secondaryTextProperties.font = AppTheme.secondaryFont
       content.secondaryTextProperties.color = AppTheme.secondaryTextColor
@@ -123,9 +117,16 @@ final class ScormCourseListViewController: UITableViewController {
       content.text = course.title
 
       if let progress = progress {
-        content.secondaryText = "\(course.manifest.scos.count) lesson(s) • \(progress)"
+        content.secondaryText = String(
+          format: L10n.tr("courses.lesson_count_progress"),
+          course.manifest.scos.count,
+          progress
+        )
       } else {
-        content.secondaryText = "\(course.manifest.scos.count) lesson(s)"
+        content.secondaryText = String(
+          format: L10n.tr("courses.lesson_count"),
+          course.manifest.scos.count
+        )
       }
 
       content.textProperties.font = .systemFont(ofSize: 17, weight: .semibold)
@@ -145,14 +146,14 @@ final class ScormCourseListViewController: UITableViewController {
     return cell
   }
 
-    @objc private func infoButtonTapped(_ sender: UIButton) {
-      let course = courses[sender.tag]
-      let viewController = CourseInfoViewController(course: course)
-      let nav = UINavigationController(rootViewController: viewController)
-      AppTheme.applyNavigationBarAppearance(to: nav)
-      nav.modalPresentationStyle = .pageSheet
-      present(nav, animated: true)
-    }
+  @objc private func infoButtonTapped(_ sender: UIButton) {
+    let course = courses[sender.tag]
+    let viewController = CourseInfoViewController(course: course)
+    let nav = UINavigationController(rootViewController: viewController)
+    AppTheme.applyNavigationBarAppearance(to: nav)
+    nav.modalPresentationStyle = .pageSheet
+    present(nav, animated: true)
+  }
 
   override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
     guard !courses.isEmpty else { return }

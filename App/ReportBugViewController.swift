@@ -34,16 +34,18 @@ final class ReportBugViewController: UIViewController {
     }
   }
 
-  private let categories = [
-    "Login / Access",
-    "Offline Courses",
-    "SCORM Playback",
-    "Progress / Resume",
-    "Downloads",
-    "Performance",
-    "UI / Visual Issue",
-    "Other"
-  ]
+  private var categories: [String] {
+    [
+      L10n.tr("report_bug.category.login_access"),
+      L10n.tr("report_bug.category.offline_courses"),
+      L10n.tr("report_bug.category.scorm_playback"),
+      L10n.tr("report_bug.category.progress_resume"),
+      L10n.tr("report_bug.category.downloads"),
+      L10n.tr("report_bug.category.performance"),
+      L10n.tr("report_bug.category.ui_visual_issue"),
+      L10n.tr("report_bug.category.other")
+    ]
+  }
 
   private lazy var categoryPicker: UIPickerView = {
     let picker = UIPickerView()
@@ -63,8 +65,19 @@ final class ReportBugViewController: UIViewController {
     AppTheme.applyNavigationBarAppearance(to: navigationController)
   }
 
+  override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+      categoryPicker.reloadAllComponents()
+      if categoryField.isFirstResponder {
+        let selectedRow = categoryPicker.selectedRow(inComponent: 0)
+        if categories.indices.contains(selectedRow) {
+          categoryField.text = categories[selectedRow]
+        }
+      }
+    }
+
   private func configureView() {
-    title = "Report a Bug"
+    title = L10n.tr("report_bug.title")
     view.backgroundColor = AppTheme.groupedBackgroundColor
 
     scrollView.alwaysBounceVertical = true
@@ -139,13 +152,13 @@ final class ReportBugViewController: UIViewController {
     }
 
     let titleLabel = UILabel()
-    titleLabel.text = "Report a Bug"
+    titleLabel.text = L10n.tr("report_bug.title")
     titleLabel.font = .systemFont(ofSize: 24, weight: .bold)
     titleLabel.textColor = AppTheme.primaryTextColor
     titleLabel.textAlignment = .center
 
     let subtitleLabel = UILabel()
-    subtitleLabel.text = "Share the issue, attach helpful context, and send it directly to support."
+    subtitleLabel.text = L10n.tr("report_bug.subtitle")
     subtitleLabel.font = AppTheme.secondaryFont
     subtitleLabel.textColor = AppTheme.secondaryTextColor
     subtitleLabel.textAlignment = .center
@@ -174,28 +187,20 @@ final class ReportBugViewController: UIViewController {
 
   private func makeIntroCard() -> UIView {
     makeInfoCard(
-      title: "Before you submit",
+      title: L10n.tr("report_bug.before_submit.title"),
       systemImage: "info.circle.fill",
-      body: """
-      Helpful bug reports usually include:
-      • what you were trying to do
-      • what actually happened
-      • whether the issue is repeatable
-      • the course name and lesson name, if applicable
-
-      You can also attach a screenshot, device diagnostics, and recent app logs.
-      """
+      body: L10n.tr("report_bug.before_submit.body")
     )
   }
 
   private func makeFormCard() -> UIView {
     let card = makeCardView()
 
-    let header = makeSectionHeader(title: "Bug Details", systemImage: "square.and.pencil")
+    let header = makeSectionHeader(title: L10n.tr("report_bug.details.title"), systemImage: "square.and.pencil")
 
     configureTextField(
       categoryField,
-      placeholder: "Select category",
+      placeholder: L10n.tr("report_bug.category.placeholder"),
       systemImage: "tag.fill"
     )
     categoryField.inputView = categoryPicker
@@ -210,13 +215,13 @@ final class ReportBugViewController: UIViewController {
 
     configureTextField(
       titleField,
-      placeholder: "Short summary",
+      placeholder: L10n.tr("report_bug.summary.placeholder"),
       systemImage: "text.bubble.fill"
     )
 
     configureTextField(
       emailField,
-      placeholder: "Your email (optional)",
+      placeholder: L10n.tr("report_bug.email.placeholder"),
       systemImage: "envelope.fill"
     )
     emailField.keyboardType = .emailAddress
@@ -224,7 +229,7 @@ final class ReportBugViewController: UIViewController {
     emailField.autocorrectionType = .no
 
     let descriptionLabel = UILabel()
-    descriptionLabel.text = "Description"
+    descriptionLabel.text = L10n.tr("report_bug.description.title")
     descriptionLabel.font = .systemFont(ofSize: 15, weight: .semibold)
     descriptionLabel.textColor = AppTheme.primaryTextColor
 
@@ -242,7 +247,7 @@ final class ReportBugViewController: UIViewController {
     descriptionTextView.textContainerInset = UIEdgeInsets(top: 14, left: 12, bottom: 14, right: 12)
 
     descriptionPlaceholderLabel.translatesAutoresizingMaskIntoConstraints = false
-    descriptionPlaceholderLabel.text = "Describe the issue, what you expected, and what happened instead."
+    descriptionPlaceholderLabel.text = L10n.tr("report_bug.description.placeholder")
     descriptionPlaceholderLabel.font = AppTheme.bodyFont
     descriptionPlaceholderLabel.textColor = AppTheme.secondaryTextColor
     descriptionPlaceholderLabel.numberOfLines = 0
@@ -263,15 +268,15 @@ final class ReportBugViewController: UIViewController {
     ])
 
     let diagnosticsRow = makeSwitchRow(
-      title: "Include Diagnostics",
-      subtitle: "Attach app version, iOS version, branding, and device details",
+      title: L10n.tr("report_bug.diagnostics.title"),
+      subtitle: L10n.tr("report_bug.diagnostics.subtitle"),
       control: includeDiagnosticsSwitch
     )
     includeDiagnosticsSwitch.onTintColor = AppTheme.accentColor
 
     let logsRow = makeSwitchRow(
-      title: "Attach Recent Logs",
-      subtitle: "Include the latest captured app logs as a text attachment",
+      title: L10n.tr("report_bug.logs.title"),
+      subtitle: L10n.tr("report_bug.logs.subtitle"),
       control: attachLogsSwitch
     )
     attachLogsSwitch.onTintColor = AppTheme.accentColor
@@ -309,7 +314,7 @@ final class ReportBugViewController: UIViewController {
     screenshotCard.layer.borderWidth = 1
     screenshotCard.layer.borderColor = AppTheme.separatorColor.withAlphaComponent(0.10).cgColor
 
-    let header = makeSectionHeader(title: "Screenshot", systemImage: "photo.on.rectangle.angled")
+    let header = makeSectionHeader(title: L10n.tr("report_bug.screenshot.title"), systemImage: "photo.on.rectangle.angled")
 
     screenshotPreviewImageView.translatesAutoresizingMaskIntoConstraints = false
     screenshotPreviewImageView.contentMode = .scaleAspectFill
@@ -326,12 +331,12 @@ final class ReportBugViewController: UIViewController {
     screenshotSubtitleLabel.numberOfLines = 0
 
     AppTheme.styleSecondaryButton(screenshotButton)
-    screenshotButton.setTitle("Choose Screenshot", for: .normal)
+    screenshotButton.setTitle(L10n.tr("report_bug.screenshot.choose"), for: .normal)
     screenshotButton.translatesAutoresizingMaskIntoConstraints = false
     screenshotButton.heightAnchor.constraint(equalToConstant: 48).isActive = true
     screenshotButton.addTarget(self, action: #selector(selectScreenshotTapped), for: .touchUpInside)
 
-    removeScreenshotButton.setTitle("Remove", for: .normal)
+    removeScreenshotButton.setTitle(L10n.tr("common.remove"), for: .normal)
     removeScreenshotButton.setTitleColor(AppTheme.destructiveColor, for: .normal)
     removeScreenshotButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
     removeScreenshotButton.addTarget(self, action: #selector(removeScreenshotTapped), for: .touchUpInside)
@@ -366,13 +371,13 @@ final class ReportBugViewController: UIViewController {
     let container = UIView()
 
     AppTheme.stylePrimaryButton(submitButton)
-    submitButton.setTitle("Submit Report", for: .normal)
+    submitButton.setTitle(L10n.tr("report_bug.submit"), for: .normal)
     submitButton.translatesAutoresizingMaskIntoConstraints = false
     submitButton.heightAnchor.constraint(equalToConstant: 54).isActive = true
     submitButton.addTarget(self, action: #selector(submitTapped), for: .touchUpInside)
 
     let noteLabel = UILabel()
-    noteLabel.text = "Submitting opens your mail composer to send report."
+    noteLabel.text = L10n.tr("report_bug.submit.note")
     noteLabel.font = AppTheme.secondaryFont
     noteLabel.textColor = AppTheme.secondaryTextColor
     noteLabel.numberOfLines = 0
@@ -514,13 +519,16 @@ final class ReportBugViewController: UIViewController {
     screenshotPreviewImageView.image = selectedScreenshot
     screenshotPreviewImageView.isHidden = !hasScreenshot
     removeScreenshotButton.isHidden = !hasScreenshot
-
-    screenshotTitleLabel.text = hasScreenshot ? "Screenshot attached" : "No screenshot selected"
+    screenshotTitleLabel.text = hasScreenshot
+      ? L10n.tr("report_bug.screenshot.attached")
+        : L10n.tr("report_bug.screenshot.none")
     screenshotSubtitleLabel.text = hasScreenshot
-      ? "This image will be attached to the bug report email."
-      : "Attach a screenshot to help explain the issue visually."
-
-    screenshotButton.setTitle(hasScreenshot ? "Change Screenshot" : "Choose Screenshot", for: .normal)
+      ? L10n.tr("report_bug.screenshot.attached_subtitle")
+        : L10n.tr("report_bug.screenshot.none_subtitle")
+    screenshotButton.setTitle(
+      hasScreenshot ? L10n.tr("report_bug.screenshot.change") : L10n.tr("report_bug.screenshot.choose"),
+        for: .normal
+      )
   }
 
   @objc private func donePickingCategory() {
@@ -546,13 +554,13 @@ final class ReportBugViewController: UIViewController {
   @objc private func submitTapped() {
     guard let summary = titleField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
       !summary.isEmpty else {
-      presentAlert(title: "Missing Summary", message: "Please enter a short summary for the bug.")
+      presentAlert(title: L10n.tr("report_bug.validation.missing_summary.title"), message: L10n.tr("report_bug.validation.missing_summary.message"))
       return
     }
 
     let description = descriptionTextView.text.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !description.isEmpty else {
-      presentAlert(title: "Missing Description", message: "Please describe what happened.")
+      presentAlert(title: L10n.tr("report_bug.validation.missing_description.title"), message: L10n.tr("report_bug.validation.missing_description.message"))
       return
     }
 
@@ -584,7 +592,7 @@ final class ReportBugViewController: UIViewController {
   private func buildEmailBody(summary: String, description: String) -> String {
     let category = categoryField.text?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
       ? categoryField.text!
-      : "Other"
+      : L10n.tr("report_bug.category.other")
 
     let email = emailField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
@@ -595,7 +603,7 @@ final class ReportBugViewController: UIViewController {
     Host: \(AppConfiguration.branding.hostDisplayName)
     Category: \(category)
     Summary: \(summary)
-    Contact Email: \(email.isEmpty ? "Not provided" : email)
+    Contact Email: \(email.isEmpty ? L10n.tr("report_bug.email.not_provided") : email)
 
     Description:
     \(description)
@@ -634,8 +642,8 @@ final class ReportBugViewController: UIViewController {
 
   private func buildDiagnostics() -> String {
     let bundle = Bundle.main
-    let version = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown"
-    let build = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "Unknown"
+    let version = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? L10n.tr("common.unknown")
+    let build = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? L10n.tr("common.unknown")
     let device = UIDevice.current
 
     return """
@@ -662,26 +670,26 @@ final class ReportBugViewController: UIViewController {
 
   private func presentAlert(title: String, message: String) {
     let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-    alert.addAction(UIAlertAction(title: "OK", style: .default))
+    alert.addAction(UIAlertAction(title: L10n.tr("common.ok"), style: .default))
     present(alert, animated: true)
   }
 
   private func presentMailUnavailableAlert(subject: String, body: String) {
     let alert = UIAlertController(
-      title: "Mail Not Available",
-      message: "This device is not configured to send mail from the app.",
+      title: L10n.tr("report_bug.mail_unavailable.title"),
+      message: L10n.tr("report_bug.mail_unavailable.message"),
       preferredStyle: .alert
     )
 
-    alert.addAction(UIAlertAction(title: "Copy Report", style: .default, handler: { _ in
+    alert.addAction(UIAlertAction(title: L10n.tr("report_bug.copy_report"), style: .default, handler: { _ in
       UIPasteboard.general.string = "Subject: \(subject)\n\n\(body)"
       self.presentSubmissionSuccessState(
-        title: "Copied to Clipboard",
-        message: "Your report details were copied. Paste them into an email to support@meridianks.com."
+        title: L10n.tr("report_bug.copied.title"),
+        message: L10n.tr("report_bug.copied.message"),
       )
     }))
 
-    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+    alert.addAction(UIAlertAction(title: L10n.tr("common.cancel"), style: .cancel))
     present(alert, animated: true)
   }
 
@@ -705,7 +713,7 @@ final class ReportBugViewController: UIViewController {
 
     alert.setValue(attributedTitle, forKey: "attributedTitle")
     alert.setValue(attributedMessage, forKey: "attributedMessage")
-    alert.addAction(UIAlertAction(title: "Done", style: .default))
+    alert.addAction(UIAlertAction(title: L10n.tr("common.done"), style: .default))
 
     present(alert, animated: true)
   }
@@ -770,23 +778,23 @@ extension ReportBugViewController: MFMailComposeViewControllerDelegate {
   ) {
     controller.dismiss(animated: true) {
       if let error = error {
-        self.presentAlert(title: "Mail Error", message: error.localizedDescription)
+        self.presentAlert(title: L10n.tr("report_bug.mail_error.title"), message: error.localizedDescription)
         return
       }
 
       switch result {
       case .sent:
         self.presentSubmissionSuccessState(
-          title: "Report Sent",
-          message: "Thank you. Your bug report was sent successfully."
+          title: L10n.tr("report_bug.sent.title"),
+          message: L10n.tr("report_bug.sent.message")
         )
       case .saved:
         self.presentSubmissionSuccessState(
-          title: "Draft Saved",
-          message: "Your bug report was saved as a draft."
+          title: L10n.tr("report_bug.saved.title"),
+          message: L10n.tr("report_bug.saved.message")
         )
       case .failed:
-        self.presentAlert(title: "Send Failed", message: "Your bug report could not be sent.")
+        self.presentAlert(title: L10n.tr("report_bug.send_failed.title"), message: L10n.tr("report_bug.send_failed.message"))
       case .cancelled:
         break
       @unknown default:

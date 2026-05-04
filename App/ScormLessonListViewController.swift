@@ -16,7 +16,7 @@ final class ScormLessonListViewController: UITableViewController {
     self.scormDir = scormDir
     self.manifest = manifest
     super.init(style: .insetGrouped)
-    title = manifest.title ?? "Lessons"
+    title = manifest.title ?? L10n.tr("lessons.title.default")
   }
 
   required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -40,11 +40,11 @@ final class ScormLessonListViewController: UITableViewController {
   }
 
   override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-    manifest.scos.isEmpty ? nil : "Lessons"
+    manifest.scos.isEmpty ? nil : L10n.tr("lessons.title.default")
   }
 
   override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-    manifest.scos.isEmpty ? "No lessons are available for this course." : nil
+    manifest.scos.isEmpty ? L10n.tr("lessons.footer.empty") : nil
   }
 
   override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -53,7 +53,7 @@ final class ScormLessonListViewController: UITableViewController {
 
     var content = cell.defaultContentConfiguration()
     content.text = sco.title
-    content.secondaryText = "Lesson \(indexPath.row + 1)"
+    content.secondaryText = String(format: L10n.tr("lessons.lesson_number"), indexPath.row + 1)
     content.textProperties.font = .systemFont(ofSize: 17, weight: .semibold)
     content.secondaryTextProperties.font = AppTheme.secondaryFont
     content.secondaryTextProperties.color = AppTheme.secondaryTextColor

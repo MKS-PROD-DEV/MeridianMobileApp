@@ -31,7 +31,7 @@ private final class ScormURLSchemeHandler: NSObject, WKURLSchemeHandler {
         NSError(
           domain: "ScormScheme",
           code: 400,
-          userInfo: [NSLocalizedDescriptionKey: "Missing request URL"]
+          userInfo: [NSLocalizedDescriptionKey: L10n.tr("scorm_player.error.missing_request_url")]
         )
       )
       return
@@ -48,7 +48,7 @@ private final class ScormURLSchemeHandler: NSObject, WKURLSchemeHandler {
           headerFields: ["Content-Type": "text/plain"]
         )!
         urlSchemeTask.didReceive(response)
-        urlSchemeTask.didReceive(Data("Not Found".utf8))
+        urlSchemeTask.didReceive(Data(L10n.tr("scorm_player.error.not_found").utf8))
         urlSchemeTask.didFinish()
         return
       }
@@ -87,7 +87,7 @@ private final class ScormURLSchemeHandler: NSObject, WKURLSchemeHandler {
       throw NSError(
         domain: "ScormScheme",
         code: 403,
-        userInfo: [NSLocalizedDescriptionKey: "Path escapes SCORM root"]
+        userInfo: [NSLocalizedDescriptionKey: L10n.tr("scorm_player.error.path_escapes_root")]
       )
     }
 
@@ -166,7 +166,7 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
     self.readAccessURL = readAccessURL
     self.injectedJS = injectedJS
     super.init(nibName: nil, bundle: nil)
-    title = "SCORM"
+    title = L10n.tr("scorm_player.title")
   }
 
   required init?(coder: NSCoder) {
@@ -315,8 +315,8 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
       Double(rawScore) == nil {
       hasShownScoreWarning = true
       presentAlert(
-        title: "Score Unavailable",
-        message: "We couldn't read the lesson score information for this course."
+        title: L10n.tr("scorm_player.score_unavailable.title"),
+        message: L10n.tr("scorm_player.score_unavailable.message")
       )
     }
   }
@@ -325,7 +325,7 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
     guard presentedViewController == nil else { return }
 
     let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-    alert.addAction(UIAlertAction(title: "OK", style: .default))
+    alert.addAction(UIAlertAction(title: L10n.tr("common.ok"), style: .default))
     present(alert, animated: true)
   }
 
@@ -423,8 +423,8 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
       guard let cmiObj = body["cmi"] else {
         print("SCORM save missing cmi payload")
         self.presentAlert(
-          title: "Progress Save Error",
-          message: "The lesson progress could not be saved correctly."
+          title: L10n.tr("scorm_player.progress_save_error.title"),
+          message: L10n.tr("scorm_player.progress_save_error.message")
         )
         return
       }
@@ -434,8 +434,8 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
         guard let json = String(data: data, encoding: .utf8) else {
           print("SCORM save failed to encode JSON string")
           self.presentAlert(
-            title: "Progress Save Error",
-            message: "The lesson progress could not be saved correctly."
+            title: L10n.tr("scorm_player.progress_save_error.title"),
+            message: L10n.tr("scorm_player.progress_save_error.message")
           )
           return
         }
@@ -450,8 +450,8 @@ final class ScormPlayerViewController: UIViewController, WKScriptMessageHandler,
       } catch {
         print("SCORM save JSON serialization error:", error.localizedDescription)
         self.presentAlert(
-          title: "Progress Save Error",
-          message: "The lesson progress could not be saved correctly."
+          title: L10n.tr("scorm_player.progress_save_error.title"),
+          message: L10n.tr("scorm_player.progress_save_error.message")
         )
       }
 

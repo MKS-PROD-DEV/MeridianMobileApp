@@ -13,6 +13,7 @@ final class SettingsViewController: UITableViewController {
   private enum Section: Int, CaseIterable {
     case organization
     case preferences
+    case language
     case storage
     case support
   }
@@ -25,7 +26,7 @@ final class SettingsViewController: UITableViewController {
       let bundle = Bundle.main
       let version = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown"
       let build = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "Unknown"
-      return "Version \(version) (\(build))"
+      return String(format: L10n.tr("settings.version"), version, build)
     }
 
     private var copyrightText: String {
@@ -41,6 +42,10 @@ final class SettingsViewController: UITableViewController {
     case notifications
     case testNotifications
     case darkMode
+  }
+
+  private enum LanguageRow: Int, CaseIterable {
+    case appLanguage
   }
 
   private enum StorageRow: Int, CaseIterable {
@@ -84,7 +89,7 @@ final class SettingsViewController: UITableViewController {
   init(onBrandingChanged: ((Branding) -> Void)? = nil) {
     self.onBrandingChanged = onBrandingChanged
     super.init(style: .insetGrouped)
-    title = "Settings"
+    title = L10n.tr("settings.title")
   }
 
   required init?(coder: NSCoder) {
@@ -145,11 +150,11 @@ final class SettingsViewController: UITableViewController {
     private func sendTestNotification() {
       guard notificationsSwitch.isOn else {
         let alert = UIAlertController(
-          title: "Notifications Disabled",
-          message: "Turn on notifications first to send a test notification.",
+          title: L10n.tr("settings.notifications_disabled.title"),
+          message: L10n.tr("settings.notifications_disabled.message"),
           preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        alert.addAction(UIAlertAction(title: L10n.tr("common.ok"), style: .default))
         present(alert, animated: true)
         return
       }
@@ -157,8 +162,8 @@ final class SettingsViewController: UITableViewController {
       dismiss(animated: true) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
           NotificationController.shared.scheduleSimpleNotification(
-            title: "Test Notification",
-            body: "Notifications are working correctly.",
+            title: L10n.tr("settings.test_notification.title"),
+            body: L10n.tr("settings.test_notification.body"),
             timeInterval: 2
           )
         }
@@ -177,6 +182,8 @@ final class SettingsViewController: UITableViewController {
       return OrganizationRow.allCases.count
     case .preferences:
       return PreferencesRow.allCases.count
+    case .language:
+      return AppConfiguration.isLocalizationEnabled ? LanguageRow.allCases.count : 0
     case .storage:
       return StorageRow.allCases.count
     case .support:
@@ -184,31 +191,36 @@ final class SettingsViewController: UITableViewController {
     }
   }
 
-  override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-    guard let section = Section(rawValue: section) else { return nil }
+    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+      guard let section = Section(rawValue: section) else { return nil }
 
-    switch section {
-    case .organization:
-      return "Organization"
-    case .preferences:
-      return "Preferences"
-    case .storage:
-      return "Storage"
-    case .support:
-      return "Support"
+      switch section {
+      case .organization:
+        return L10n.tr("settings.section.organization")
+      case .preferences:
+        return L10n.tr("settings.section.preferences")
+      case .language:
+        return AppConfiguration.isLocalizationEnabled ? L10n.tr("settings.section.language") : nil
+      case .storage:
+        return L10n.tr("settings.section.storage")
+      case .support:
+        return L10n.tr("settings.section.support")
+      }
     }
-  }
+
     // Update this later (CPY SCORM)
     override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
       guard let section = Section(rawValue: section) else { return nil }
 
       switch section {
       case .organization:
-        return "Choose which organization site and branding the app should use."
+        return L10n.tr("settings.footer.organization")
       case .preferences:
         return nil
+      case .language:
+        return AppConfiguration.isLocalizationEnabled ? L10n.tr("settings.footer.language") : nil
       case .storage:
-        return "Downloaded SCORM content is stored locally on this device."
+        return L10n.tr("settings.footer.storage")
       case .support:
         return nil
       }
@@ -228,7 +240,7 @@ final class SettingsViewController: UITableViewController {
         stack.translatesAutoresizingMaskIntoConstraints = false
 
         let messageLabel = UILabel()
-        messageLabel.text = "Need help or want to report a problem?"
+        messageLabel.text = L10n.tr("settings.footer.support.message")
         messageLabel.font = AppTheme.secondaryFont
         messageLabel.textColor = AppTheme.secondaryTextColor
         messageLabel.numberOfLines = 0
@@ -308,7 +320,7 @@ final class SettingsViewController: UITableViewController {
 
     switch section {
     case .organization:
-      content.text = "Current Organization"
+      content.text = L10n.tr("settings.organization.current")
       content.secondaryText = "\(AppConfiguration.branding.fullName) • \(AppConfiguration.branding.hostDisplayName)"
       cell.contentConfiguration = content
       cell.accessoryType = .disclosureIndicator
@@ -318,36 +330,42 @@ final class SettingsViewController: UITableViewController {
 
       switch row {
       case .notifications:
-        content.text = "Notifications"
-        content.secondaryText = "Manage app-level notifications"
+        content.text = L10n.tr("settings.notifications")
+        content.secondaryText = L10n.tr("settings.notifications.subtitle")
         cell.contentConfiguration = content
         cell.accessoryView = notificationsSwitch
         cell.selectionStyle = .none
 
       case .testNotifications:
-        content.text = "Test Notifications"
-        content.secondaryText = "Send a local test notification"
+        content.text = L10n.tr("settings.test_notifications")
+        content.secondaryText = L10n.tr("settings.test_notifications.subtitle")
         cell.contentConfiguration = content
         cell.accessoryType = .disclosureIndicator
         cell.selectionStyle = .default
 
       case .darkMode:
-        content.text = "Dark Mode"
-        content.secondaryText = "Use dark appearance throughout the app"
+        content.text = L10n.tr("settings.dark_mode")
+        content.secondaryText = L10n.tr("settings.dark_mode.subtitle")
         cell.contentConfiguration = content
         cell.accessoryView = darkModeSwitch
         cell.selectionStyle = .none
       }
 
+    case .language:
+      content.text = L10n.tr("settings.language")
+      content.secondaryText = AppConfiguration.selectedLanguage.displayName
+      cell.contentConfiguration = content
+      cell.accessoryType = .disclosureIndicator
+
     case .storage:
-      content.text = "Clear Downloaded Content"
-      content.secondaryText = "Remove all saved offline courses • \(assetsSizeText)"
+      content.text = L10n.tr("settings.clear_downloaded_content")
+      content.secondaryText = String(format: L10n.tr("settings.clear_downloaded_content.subtitle"), assetsSizeText)
       content.textProperties.color = AppTheme.destructiveColor
       cell.contentConfiguration = content
 
     case .support:
-      content.text = "Report a Bug"
-      content.secondaryText = "Share an issue with the app experience"
+      content.text = L10n.tr("settings.report_bug")
+      content.secondaryText = L10n.tr("settings.report_bug.subtitle")
       cell.contentConfiguration = content
       cell.accessoryType = .disclosureIndicator
     }
@@ -373,6 +391,8 @@ final class SettingsViewController: UITableViewController {
       case .testNotifications:
         sendTestNotification()
       }
+    case .language:
+      showLanguagePicker()
 
     case .storage:
       confirmClearAllDownloadedContent()
@@ -408,29 +428,57 @@ final class SettingsViewController: UITableViewController {
     onBrandingChanged?(branding)
 
     let alert = UIAlertController(
-      title: "Organization Updated",
-      message: "\(branding.fullName) is Active.",
+      title: L10n.tr("settings.organization_updated.title"),
+      message: String(format: L10n.tr("settings.organization_updated.message"), branding.fullName),
       preferredStyle: .alert
     )
 
-    alert.addAction(UIAlertAction(title: "OK", style: .default))
+    alert.addAction(UIAlertAction(title: L10n.tr("common.ok"), style: .default))
     present(alert, animated: true)
   }
 
   private func confirmClearAllDownloadedContent() {
     let alert = UIAlertController(
-      title: "Clear Downloaded Content?",
-      message: "This will remove all downloaded SCORM courses from local storage.",
+      title: L10n.tr("settings.clear_confirm.title"),
+      message: L10n.tr("settings.clear_confirm.message"),
       preferredStyle: .alert
     )
 
-    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-    alert.addAction(UIAlertAction(title: "Clear", style: .destructive, handler: { [weak self] _ in
+    alert.addAction(UIAlertAction(title: L10n.tr("common.cancel"), style: .cancel))
+    alert.addAction(UIAlertAction(title: L10n.tr("common.clear"), style: .destructive, handler: { [weak self] _ in
       self?.clearAllDownloadedContent()
     }))
 
     present(alert, animated: true)
   }
+
+    private func showLanguagePicker() {
+      let controller = LanguagePickerViewController(
+        selectedLanguage: AppConfiguration.selectedLanguage
+      ) { [weak self] language in
+        AppConfiguration.selectedLanguage = language
+        self?.tableView.reloadData()
+
+        let alert = UIAlertController(
+          title: L10n.tr("settings.language_updated.title"),
+          message: String(format: L10n.tr("settings.language_updated.message"), language.displayName),
+          preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: L10n.tr("common.ok"), style: .default))
+        self?.present(alert, animated: true)
+      }
+
+      let navigationController = UINavigationController(rootViewController: controller)
+      navigationController.modalPresentationStyle = .pageSheet
+
+      if let sheet = navigationController.sheetPresentationController {
+        sheet.detents = [.medium()]
+        sheet.prefersGrabberVisible = true
+        sheet.preferredCornerRadius = 24
+      }
+
+      present(navigationController, animated: true)
+    }
 
     // Remove this later (CPY SCORM)
     private func seedBundledCourses() {
@@ -522,20 +570,20 @@ final class SettingsViewController: UITableViewController {
       ScormProgressStore.shared.clearAll()
 
       let success = UIAlertController(
-        title: "Done",
-        message: "All downloaded content has been cleared.",
+        title: L10n.tr("settings.clear_success.title"),
+        message: L10n.tr("settings.clear_success.message"),
         preferredStyle: .alert
       )
-      success.addAction(UIAlertAction(title: "OK", style: .default))
+      success.addAction(UIAlertAction(title: L10n.tr("common.ok"), style: .default))
       present(success, animated: true)
       self.tableView.reloadData()
     } catch {
       let failure = UIAlertController(
-        title: "Error",
-        message: "Failed to clear downloaded content.",
+        title: L10n.tr("common.error"),
+        message: L10n.tr("settings.clear_failed.message"),
         preferredStyle: .alert
       )
-      failure.addAction(UIAlertAction(title: "OK", style: .default))
+      failure.addAction(UIAlertAction(title: L10n.tr("common.ok"), style: .default))
       present(failure, animated: true)
     }
   }
@@ -552,7 +600,7 @@ private final class OrganizationPickerViewController: UIViewController {
     self.selectedBranding = selectedBranding
     self.onApply = onApply
     super.init(nibName: nil, bundle: nil)
-    title = "Choose Organization"
+    title = L10n.tr("settings.organization_picker.title")
   }
 
   required init?(coder: NSCoder) {
@@ -577,7 +625,7 @@ private final class OrganizationPickerViewController: UIViewController {
     )
 
     navigationItem.rightBarButtonItem = UIBarButtonItem(
-      title: "Apply",
+      title: L10n.tr("common.apply"),
       style: .done,
       target: self,
       action: #selector(applyTapped)
@@ -598,14 +646,14 @@ private final class OrganizationPickerViewController: UIViewController {
   private func configureLayout() {
     let titleLabel = UILabel()
     titleLabel.translatesAutoresizingMaskIntoConstraints = false
-    titleLabel.text = "Choose Organization"
+    titleLabel.text = L10n.tr("settings.organization_picker.title")
     titleLabel.font = .systemFont(ofSize: 22, weight: .bold)
     titleLabel.textColor = AppTheme.primaryTextColor
     titleLabel.textAlignment = .center
 
     let subtitleLabel = UILabel()
     subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
-    subtitleLabel.text = "Swipe to select the site and branding you want to use."
+    subtitleLabel.text = L10n.tr("settings.organization_picker.subtitle")
     subtitleLabel.font = AppTheme.secondaryFont
     subtitleLabel.textColor = AppTheme.secondaryTextColor
     subtitleLabel.textAlignment = .center
@@ -654,6 +702,94 @@ private final class OrganizationPickerViewController: UIViewController {
     dismiss(animated: true) {
       self.onApply(branding)
     }
+  }
+}
+
+private final class LanguagePickerViewController: UIViewController {
+  private let pickerView = UIPickerView()
+  private let languages = AppConfiguration.availableLanguages
+  private let selectedLanguage: AppLanguage
+  private let onApply: (AppLanguage) -> Void
+
+  init(selectedLanguage: AppLanguage, onApply: @escaping (AppLanguage) -> Void) {
+    self.selectedLanguage = selectedLanguage
+    self.onApply = onApply
+    super.init(nibName: nil, bundle: nil)
+    title = L10n.tr("settings.language_picker.title")
+  }
+
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+
+  override func viewDidLoad() {
+    super.viewDidLoad()
+
+    view.backgroundColor = AppTheme.groupedBackgroundColor
+    AppTheme.applyNavigationBarAppearance(to: navigationController)
+    configureNavigation()
+    configurePicker()
+    configureLayout()
+  }
+
+  private func configureNavigation() {
+    navigationItem.leftBarButtonItem = UIBarButtonItem(
+      title: L10n.tr("common.cancel"),
+      style: .plain,
+      target: self,
+      action: #selector(cancelTapped)
+    )
+
+    navigationItem.rightBarButtonItem = UIBarButtonItem(
+      title: L10n.tr("common.apply"),
+      style: .done,
+      target: self,
+      action: #selector(applyTapped)
+    )
+  }
+
+  private func configurePicker() {
+    pickerView.translatesAutoresizingMaskIntoConstraints = false
+    pickerView.dataSource = self
+    pickerView.delegate = self
+    view.addSubview(pickerView)
+
+    if let selectedIndex = languages.firstIndex(of: selectedLanguage) {
+      pickerView.selectRow(selectedIndex, inComponent: 0, animated: false)
+    }
+  }
+
+  private func configureLayout() {
+    NSLayoutConstraint.activate([
+      pickerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+      pickerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+      pickerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+      pickerView.heightAnchor.constraint(equalToConstant: 220)
+    ])
+  }
+
+  @objc private func cancelTapped() {
+    dismiss(animated: true)
+  }
+
+  @objc private func applyTapped() {
+    let selectedIndex = pickerView.selectedRow(inComponent: 0)
+    let language = languages[selectedIndex]
+    dismiss(animated: true) {
+      self.onApply(language)
+    }
+  }
+}
+
+extension LanguagePickerViewController: UIPickerViewDataSource, UIPickerViewDelegate {
+  func numberOfComponents(in pickerView: UIPickerView) -> Int { 1 }
+
+  func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+    languages.count
+  }
+
+  func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+    languages[row].displayName
   }
 }
 

@@ -40,7 +40,7 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
   private let titleLabel: UILabel = {
     let label = UILabel()
     label.translatesAutoresizingMaskIntoConstraints = false
-    label.text = "Meridian Global"
+    label.text = AppConfiguration.branding.fullName
     label.font = AppTheme.titleFont
     label.textAlignment = .center
     label.textColor = AppTheme.primaryTextColor
@@ -50,7 +50,7 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
   private let subtitleLabel: UILabel = {
     let label = UILabel()
     label.translatesAutoresizingMaskIntoConstraints = false
-    label.text = "Please select your Organization to continue."
+    label.text = L10n.tr("site_selection.subtitle")
     label.font = AppTheme.bodyFont
     label.textAlignment = .center
     label.textColor = AppTheme.secondaryTextColor
@@ -88,7 +88,7 @@ final class InitialSiteSelectionViewController: UIViewController, UITableViewDat
   private let confirmButton: UIButton = {
     let button = UIButton(type: .system)
     button.translatesAutoresizingMaskIntoConstraints = false
-    button.setTitle("Confirm Selection", for: .normal)
+    button.setTitle(L10n.tr("site_selection.confirm"), for: .normal)
     AppTheme.stylePrimaryButton(button)
     button.isEnabled = false
     button.alpha = 0.5

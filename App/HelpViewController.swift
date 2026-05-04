@@ -20,7 +20,7 @@ final class HelpViewController: UIViewController {
   }
 
   private func configureView() {
-    title = "Help"
+    title = L10n.tr("help.title")
     view.backgroundColor = AppTheme.groupedBackgroundColor
 
     scrollView.alwaysBounceVertical = true
@@ -63,85 +63,80 @@ final class HelpViewController: UIViewController {
 
     contentStack.addArrangedSubview(
       makeInfoCard(
-        title: "What this app does",
+        title: L10n.tr("help.what_this_app_does.title"),
         systemImage: "sparkles.rectangle.stack",
-        body: """
-        \(AppConfiguration.branding.fullName) Mobile lets you access learning content in the main app and open downloaded SCORM courses offline.
-
-        The app includes a native offline learning flow for:
-        • downloaded course access
-        • lesson selection
-        • offline SCORM playback
-        • local progress saving on your device
-        """
+        body: String(
+          format: L10n.tr("help.what_this_app_does.body"),
+          AppConfiguration.branding.fullName
+        )
       )
     )
 
     contentStack.addArrangedSubview(
       makeStepSection(
-        title: "Getting Started",
+        title: L10n.tr("help.getting_started.title"),
         systemImage: "play.circle.fill",
         steps: [
-          "Open the app and sign in if needed.",
-          "Browse available learning content in the main app.",
-          "Download a SCORM course if you want offline access.",
-          "Open the downloaded course from the offline course area.",
-          "Choose a lesson and begin learning."
+          L10n.tr("help.getting_started.step1"),
+          L10n.tr("help.getting_started.step2"),
+          L10n.tr("help.getting_started.step3"),
+          L10n.tr("help.getting_started.step4"),
+          L10n.tr("help.getting_started.step5")
         ]
       )
     )
 
     contentStack.addArrangedSubview(
       makeStepSection(
-        title: "Using Offline Courses",
+        title: L10n.tr("help.using_offline_courses.title"),
         systemImage: "arrow.down.circle.fill",
         steps: [
-          "Downloaded SCORM packages are stored locally on your device.",
-          "Offline courses appear in the native offline course list.",
-          "Tap a course to view its lessons.",
-          "Tap a lesson to launch the SCORM player.",
-          "Once fully downloaded, the course can usually be opened without internet access."
+          L10n.tr("help.using_offline_courses.step1"),
+          L10n.tr("help.using_offline_courses.step2"),
+          L10n.tr("help.using_offline_courses.step3"),
+          L10n.tr("help.using_offline_courses.step4"),
+          L10n.tr("help.using_offline_courses.step5")
         ]
       )
     )
 
     contentStack.addArrangedSubview(
       makeStepSection(
-        title: "Progress and Resume",
+        title: L10n.tr("help.progress_resume.title"),
         systemImage: "checkmark.circle.fill",
         steps: [
-          "Your lesson progress is saved locally while you learn.",
-          "The app stores SCORM learner progress in native SQLite storage on the device.",
-          "When you reopen the same lesson later, saved state may be restored depending on how that SCORM package handles resume data.",
-          "If connectivity is available, surrounding app workflows may also support sync behavior."
+          L10n.tr("help.progress_resume.step1"),
+          L10n.tr("help.progress_resume.step2"),
+          L10n.tr("help.progress_resume.step3"),
+          L10n.tr("help.progress_resume.step4")
         ]
       )
     )
 
     contentStack.addArrangedSubview(
       makeFAQSection(
-        title: "Frequently Asked Questions",
+        title: L10n.tr("help.faq.title"),
         systemImage: "questionmark.circle.fill",
         items: [
           FAQItem(
-            question: "Do I need internet to play a downloaded SCORM course?",
-            answer: "No. After a SCORM package is fully downloaded and extracted, lessons can be launched locally offline."
+            question: L10n.tr("help.faq.q1"),
+            answer: L10n.tr("help.faq.a1")
           ),
           FAQItem(
-            question: "Where are offline files stored?",
-            answer: "Downloaded SCORM files are stored in the app’s local Documents directory on your device."
+            question: L10n.tr("help.faq.q2"),
+            answer: L10n.tr("help.faq.a2")
           ),
           FAQItem(
-            question: "Is my progress saved automatically?",
-            answer: "Usually yes. The offline SCORM player saves progress locally as the lesson runs and during SCORM commit-style updates."
+            question: L10n.tr("help.faq.q3"),
+            answer: L10n.tr("help.faq.a3")
           ),
           FAQItem(
-            question: "Why does a lesson fail to open correctly?",
-            answer: "This can happen if the SCORM package is incomplete, missing launch metadata, or includes content that depends on unsupported browser behavior."
+            question: L10n.tr("help.faq.q4"),
+            answer: L10n.tr("help.faq.a4")
           ),
           FAQItem(
-            question: "Do popup lesson windows work?",
-            answer: "Yes. The native player supports popup windows used by some SCORM content."
+            question: L10n.tr("help.faq.q5"),
+            answer: L10n.tr("help.faq.a5")
           )
         ]
       )
@@ -149,32 +144,17 @@ final class HelpViewController: UIViewController {
 
     contentStack.addArrangedSubview(
       makeInfoCard(
-        title: "Troubleshooting",
+        title: L10n.tr("help.troubleshooting.title"),
         systemImage: "wrench.and.screwdriver.fill",
-        body: """
-        If something is not working as expected:
-
-        • Confirm the course completed downloading
-        • Reopen the course and select the lesson again
-        • Make sure you opened the correct offline course
-        • Try online access if the content depends on remote resources
-        • If progress looks incorrect, reopen the same lesson and verify you selected the expected course and lesson
-
-        If the issue continues, capture the course name and lesson name before reporting it.
-        """
+        body: L10n.tr("help.troubleshooting.body")
       )
     )
 
     contentStack.addArrangedSubview(
       makeInfoCard(
-        title: "Helpful Tips",
+        title: L10n.tr("help.tips.title"),
         systemImage: "lightbulb.fill",
-        body: """
-        • Download courses before you lose connectivity
-        • Open important courses once after download to confirm they are ready
-        • Use the lesson list to launch the exact lesson you need
-        • Stay in the lesson briefly before closing so progress has time to save
-        """
+        body: L10n.tr("help.tips.body")
       )
     )
   }
@@ -203,14 +183,14 @@ final class HelpViewController: UIViewController {
     logoContainer.addSubview(logoView)
 
     let titleLabel = UILabel()
-    titleLabel.text = "\(AppConfiguration.branding.fullName) Help"
+    titleLabel.text = String(format: L10n.tr("help.header.title"), AppConfiguration.branding.fullName)
     titleLabel.textColor = AppTheme.primaryTextColor
     titleLabel.font = .systemFont(ofSize: 24, weight: .bold)
     titleLabel.numberOfLines = 0
     titleLabel.textAlignment = .center
 
     let subtitleLabel = UILabel()
-    subtitleLabel.text = "Offline learning, SCORM playback, downloads, and progress tracking."
+    subtitleLabel.text = L10n.tr("help.header.subtitle")
     subtitleLabel.textColor = AppTheme.secondaryTextColor
     subtitleLabel.font = AppTheme.secondaryFont
     subtitleLabel.numberOfLines = 0

@@ -4,6 +4,8 @@
   - Declared Display Names
   - Declare Host and Launch URLS
   - Configs for Biometrics
+  - Configs to enable localization
+  - Configs to add locales
 */
 import Foundation
 
@@ -60,10 +62,30 @@ enum Branding: String, CaseIterable {
   }
 }
 
+enum AppLanguage: String, CaseIterable {
+  case english = "en"
+  case spanish = "es"
+
+  var displayName: String {
+    switch self {
+    case .english: return "English"
+    case .spanish: return "Español"
+    }
+  }
+}
+
 enum AppConfiguration {
   private static let brandingKey = "app.configuration.branding"
+  private static let languageKey = "app.configuration.language"
 
   static let isOfflineModeAuthenticationEnabled = false
+
+  static let isLocalizationEnabled = true
+
+  static let availableLanguages: [AppLanguage] = [
+    .english,
+    .spanish
+  ]
 
   static var hasSelectedBranding: Bool {
     UserDefaults.standard.string(forKey: brandingKey) != nil
@@ -72,14 +94,29 @@ enum AppConfiguration {
   static var branding: Branding {
     get {
       guard let rawValue = UserDefaults.standard.string(forKey: brandingKey),
-        let branding = Branding(rawValue: rawValue)
-      else {
+        let branding = Branding(rawValue: rawValue) else {
         return .meridian
       }
       return branding
     }
     set {
       UserDefaults.standard.set(newValue.rawValue, forKey: brandingKey)
+    }
+  }
+
+  static var selectedLanguage: AppLanguage {
+    get {
+      guard
+        isLocalizationEnabled,
+        let rawValue = UserDefaults.standard.string(forKey: languageKey),
+        let language = AppLanguage(rawValue: rawValue)
+      else {
+        return .english
+      }
+      return language
+    }
+    set {
+      UserDefaults.standard.set(newValue.rawValue, forKey: languageKey)
     }
   }
 

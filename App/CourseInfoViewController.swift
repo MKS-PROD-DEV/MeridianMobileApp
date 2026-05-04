@@ -11,7 +11,7 @@ final class CourseInfoViewController: UIViewController {
   init(course: ScormCourse) {
     self.course = course
     super.init(nibName: nil, bundle: nil)
-    title = "Course Info"
+    title = L10n.tr("course_info.title")
   }
 
   required init?(coder: NSCoder) {
@@ -83,7 +83,7 @@ final class CourseInfoViewController: UIViewController {
     titleLabel.textAlignment = .center
 
     let subtitleLabel = UILabel()
-    subtitleLabel.text = "Offline SCORM course information"
+    subtitleLabel.text = L10n.tr("course_info.subtitle")
     subtitleLabel.font = AppTheme.secondaryFont
     subtitleLabel.textColor = AppTheme.secondaryTextColor
     subtitleLabel.numberOfLines = 0
@@ -109,17 +109,17 @@ final class CourseInfoViewController: UIViewController {
   private func makeDetailsCard() -> UIView {
     let card = makeCardView()
 
-    let progressText = ScormProgressStore.shared.progressStatus(for: course.assetId)?.rawValue ?? "Not Started"
+    let progressText = ScormProgressStore.shared.progressStatus(for: course.assetId)?.rawValue ?? L10n.tr("course_info.progress.not_started")
     let lastAccessedText = formattedLastAccessedDate()
     let courseTypeText = inferredCourseType()
-    let authorText = "Not available"
+    let authorText = L10n.tr("course_info.author.unavailable")
 
     let stack = UIStackView(arrangedSubviews: [
-      makeInfoRow(title: "Course Name", value: course.title),
-      makeInfoRow(title: "Course Type", value: courseTypeText),
-      makeInfoRow(title: "Course Author", value: authorText),
-      makeInfoRow(title: "Progress", value: progressText),
-      makeInfoRow(title: "Last Accessed", value: lastAccessedText)
+      makeInfoRow(title: L10n.tr("course_info.name"), value: course.title),
+      makeInfoRow(title: L10n.tr("course_info.type"), value: courseTypeText),
+      makeInfoRow(title: L10n.tr("course_info.author"), value: authorText),
+      makeInfoRow(title: L10n.tr("course_info.progress"), value: progressText),
+      makeInfoRow(title: L10n.tr("course_info.last_accessed"), value: lastAccessedText)
     ])
 
     stack.axis = .vertical
@@ -172,12 +172,12 @@ final class CourseInfoViewController: UIViewController {
   }
 
   private func inferredCourseType() -> String {
-    "SCORM Course"
+    L10n.tr("course_info.type.scorm")
   }
 
   private func formattedLastAccessedDate() -> String {
     guard let date = ScormProgressStore.shared.lastAccessedDate(for: course.assetId) else {
-      return "Never"
+      return L10n.tr("course_info.last_accessed.never")
     }
 
     let formatter = DateFormatter()

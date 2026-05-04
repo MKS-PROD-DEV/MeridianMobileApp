@@ -118,12 +118,12 @@ extension MyViewController {
   }
 
   func runStartupSequence() {
-    loadingStatusLabel.text = "Checking for network..."
+    loadingStatusLabel.text = L10n.tr("startup.checking_network")
     animateLoadingBar(to: 0.45, duration: 1.4)
 
     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
       guard let self = self else { return }
-      self.loadingStatusLabel.text = "Loading Content..."
+      self.loadingStatusLabel.text = L10n.tr("startup.loading_content")
       self.animateLoadingBar(to: 1.0, duration: 1.4)
     }
 
@@ -193,7 +193,7 @@ extension MyViewController {
       loadingFillWidthConstraint?.constant = 0
       startupOverlay.layoutIfNeeded()
 
-      loadingStatusLabel.text = "Checking network..."
+      loadingStatusLabel.text = L10n.tr("startup.checking_network_short")
       animateLoadingBar(to: 0.45, duration: 0.35)
 
       UIView.animate(withDuration: 0.2) {
@@ -206,7 +206,7 @@ extension MyViewController {
 
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
         guard let self = self else { return }
-        self.loadingStatusLabel.text = "Preparing site..."
+        self.loadingStatusLabel.text = L10n.tr("startup.preparing_site")
         self.animateLoadingBar(to: 0.9, duration: 0.45)
       }
     }
@@ -229,7 +229,7 @@ extension MyViewController {
           if isReturningFromOfflineMode {
             showReturningOnlineLoadingState()
           } else {
-            loadingStatusLabel.text = "Preparing site..."
+            self.loadingStatusLabel.text = L10n.tr("startup.preparing_site")
             loadingTrackView.isHidden = false
             loadingStatusLabel.isHidden = false
             loadingTrackView.alpha = 1
@@ -359,14 +359,14 @@ extension MyViewController {
     isShowingConnectivityAlert = true
 
     let alert = UIAlertController(
-      title: "No Internet Connection",
-      message: "No Internet connection available would you like to go to Offline Mode?",
+      title: L10n.tr("startup.no_internet.title"),
+      message: L10n.tr("startup.no_internet.message.offline_prompt"),
       preferredStyle: .alert
     )
 
     alert.addAction(
       UIAlertAction(
-        title: "Offline Mode",
+        title: L10n.tr("startup.offline_mode"),
         style: .default,
         handler: { [weak self] _ in
           guard let self = self else { return }
@@ -380,7 +380,7 @@ extension MyViewController {
 
     alert.addAction(
       UIAlertAction(
-        title: "Cancel",
+        title: L10n.tr("common.cancel"),
         style: .cancel,
         handler: { [weak self] _ in
           self?.isShowingConnectivityAlert = false
@@ -404,14 +404,14 @@ extension MyViewController {
 
   func showLockFailure() {
     let alert = UIAlertController(
-      title: "Authentication Required",
-      message: "You need authentication to enter Offline Mode.",
+      title: L10n.tr("startup.auth_required.title"),
+      message: L10n.tr("startup.auth_required.message"),
       preferredStyle: .alert
     )
 
     alert.addAction(
       UIAlertAction(
-        title: "Try Again",
+        title: L10n.tr("startup.try_again"),
         style: .default,
         handler: { [weak self] _ in
           self?.requestOfflineModeAccess()
@@ -419,7 +419,7 @@ extension MyViewController {
       )
     )
 
-    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+    alert.addAction(UIAlertAction(title: L10n.tr("common.cancel"), style: .cancel))
     present(alert, animated: true)
   }
 
@@ -438,11 +438,11 @@ extension MyViewController {
       }
     } else {
       let alert = UIAlertController(
-        title: "No Internet Connection",
-        message: "No internet connection is available.",
+        title: L10n.tr("startup.no_internet.title"),
+        message: L10n.tr("startup.no_internet.message.unavailable"),
         preferredStyle: .alert
       )
-      alert.addAction(UIAlertAction(title: "OK", style: .default))
+      alert.addAction(UIAlertAction(title: L10n.tr("common.ok"), style: .default))
       present(alert, animated: true)
     }
   }

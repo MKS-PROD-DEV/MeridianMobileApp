@@ -14,11 +14,11 @@ func authenticateUser(completion: @escaping (Result<Void, AuthError>) -> Void) {
   let context = LAContext()
   var error: NSError?
 
-  context.localizedCancelTitle = "Cancel"
+  context.localizedCancelTitle = L10n.tr("common.cancel")
   context.localizedFallbackTitle = ""
 
   let policy: LAPolicy = .deviceOwnerAuthentication
-  let reason = "Unlock to access your courses"
+  let reason = L10n.tr("auth.unlock_reason")
 
   guard context.canEvaluatePolicy(policy, error: &error) else {
     DispatchQueue.main.async {
