@@ -1,10 +1,10 @@
 import UIKit
 
 final class ScormCourseListViewController: UITableViewController {
-  private var courses: [ScormCourse]
+  private var items: [OfflineLibraryItem]
 
-  init(courses: [ScormCourse]) {
-    self.courses = courses
+  init(items: [OfflineLibraryItem]) {
+    self.items = items
     super.init(style: .insetGrouped)
   }
 
@@ -25,7 +25,7 @@ final class ScormCourseListViewController: UITableViewController {
   }
 
   @objc private func refreshCourses() {
-    courses = ScormUtils.loadAllCourses()
+    items = ScormUtils.loadOfflineLibraryItems()
     tableView.reloadData()
     tableView.refreshControl?.endRefreshing()
   }
@@ -35,28 +35,28 @@ final class ScormCourseListViewController: UITableViewController {
   }
 
   override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-    max(courses.count, 1)
+    max(items.count, 1)
   }
 
   override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-    courses.isEmpty ? nil : L10n.tr("courses.title")
+    items.isEmpty ? nil : L10n.tr("courses.title")
   }
 
   override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-    courses.isEmpty ? L10n.tr("courses.footer.empty") : nil
+    items.isEmpty ? L10n.tr("courses.footer.empty") : nil
   }
 
   override func tableView(
     _ tableView: UITableView,
     trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath
   ) -> UISwipeActionsConfiguration? {
-    guard !courses.isEmpty else { return nil }
+    guard !items.isEmpty else { return nil }
 
     let deleteAction = UIContextualAction(
       style: .destructive,
       title: L10n.tr("common.delete")
     ) { [weak self] _, _, completion in
-      self?.deleteCourse(at: indexPath, completion: completion)
+      self?.deleteItem(at: indexPath, completion: completion)
     }
 
     let configuration = UISwipeActionsConfiguration(actions: [deleteAction])
@@ -64,14 +64,14 @@ final class ScormCourseListViewController: UITableViewController {
     return configuration
   }
 
-  private func deleteCourse(at indexPath: IndexPath, completion: @escaping (Bool) -> Void) {
-    let course = courses[indexPath.row]
+  private func deleteItem(at indexPath: IndexPath, completion: @escaping (Bool) -> Void) {
+    let item = items[indexPath.row]
 
     do {
-      try ScormUtils.deleteCourse(assetId: course.assetId)
-      courses.remove(at: indexPath.row)
+      try ScormUtils.deleteCourse(assetId: item.assetId)
+      items.remove(at: indexPath.row)
 
-      if courses.isEmpty {
+      if items.isEmpty {
         tableView.reloadData()
       } else {
         tableView.deleteRows(at: [indexPath], with: .automatic)
@@ -101,7 +101,7 @@ final class ScormCourseListViewController: UITableViewController {
     let cell = tableView.dequeueReusableCell(withIdentifier: "CourseCell", for: indexPath)
     var content = cell.defaultContentConfiguration()
 
-    if courses.isEmpty {
+    if items.isEmpty {
       content.text = L10n.tr("courses.empty.title")
       content.secondaryText = L10n.tr("courses.empty.message")
       content.textProperties.font = .systemFont(ofSize: 17, weight: .semibold)
@@ -111,33 +111,26 @@ final class ScormCourseListViewController: UITableViewController {
       cell.accessoryView = nil
       cell.selectionStyle = .none
     } else {
-      let course = courses[indexPath.row]
-      let progress = ScormProgressStore.shared.progressStatus(for: course.assetId)?.rawValue
+      let item = items[indexPath.row]
 
-      content.text = course.title
-
-      if let progress = progress {
-        content.secondaryText = String(
-          format: L10n.tr("courses.lesson_count_progress"),
-          course.manifest.scos.count,
-          progress
-        )
-      } else {
-        content.secondaryText = String(
-          format: L10n.tr("courses.lesson_count"),
-          course.manifest.scos.count
-        )
-      }
-
+      content.text = item.title
+      content.secondaryText = item.subtitle
       content.textProperties.font = .systemFont(ofSize: 17, weight: .semibold)
       content.secondaryTextProperties.font = AppTheme.secondaryFont
       content.secondaryTextProperties.color = AppTheme.secondaryTextColor
 
-      let infoButton = UIButton(type: .infoLight)
-      infoButton.tintColor = AppTheme.accentColor
-      infoButton.tag = indexPath.row
-      infoButton.addTarget(self, action: #selector(infoButtonTapped(_:)), for: .touchUpInside)
-      cell.accessoryView = infoButton
+      if item.isScorm {
+        let infoButton = UIButton(type: .infoLight)
+        infoButton.tintColor = AppTheme.accentColor
+        infoButton.tag = indexPath.row
+        infoButton.addTarget(self, action: #selector(infoButtonTapped(_:)), for: .touchUpInside)
+        cell.accessoryView = infoButton
+        cell.accessoryType = .none
+      } else {
+        cell.accessoryView = nil
+        cell.accessoryType = .disclosureIndicator
+      }
+
       cell.selectionStyle = .default
     }
 
@@ -147,7 +140,8 @@ final class ScormCourseListViewController: UITableViewController {
   }
 
   @objc private func infoButtonTapped(_ sender: UIButton) {
-    let course = courses[sender.tag]
+    guard case let .scorm(course) = items[sender.tag] else { return }
+
     let viewController = CourseInfoViewController(course: course)
     let nav = UINavigationController(rootViewController: viewController)
     AppTheme.applyNavigationBarAppearance(to: nav)
@@ -156,16 +150,21 @@ final class ScormCourseListViewController: UITableViewController {
   }
 
   override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-    guard !courses.isEmpty else { return }
+    guard !items.isEmpty else { return }
 
     tableView.deselectRow(at: indexPath, animated: true)
 
-    let course = courses[indexPath.row]
-    let viewController = ScormLessonListViewController(
-      assetId: course.assetId,
-      scormDir: course.scormDir,
-      manifest: course.manifest
-    )
-    navigationController?.pushViewController(viewController, animated: true)
+    switch items[indexPath.row] {
+    case .scorm(let course):
+      let viewController = ScormLessonListViewController(
+        assetId: course.assetId,
+        scormDir: course.scormDir,
+        manifest: course.manifest
+      )
+      navigationController?.pushViewController(viewController, animated: true)
+
+    case .file(let item):
+      OfflineContentLauncher.presentContent(item, from: self)
+    }
   }
 }

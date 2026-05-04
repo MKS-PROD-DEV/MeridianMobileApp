@@ -201,3 +201,12 @@
 "scorm_player.score_unavailable.message" = "We couldn't read the lesson score information for this course.";
 "scorm_player.progress_save_error.title" = "Progress Save Error";
 "scorm_player.progress_save_error.message" = "The lesson progress could not be saved correctly.";
+
+"offline_content.unsupported.title" = "Unsupported File";
+"offline_content.unsupported.message" = "This file type is not currently supported.";
+"offline_content.type.scorm" = "SCORM Course";
+"offline_content.type.video" = "Video";
+"offline_content.type.pdf" = "PDF";
+"offline_content.type.document" = "Document";
+"offline_content.type.web" = "Web Content";
+"offline_content.type.unsupported" = "Unsupported";

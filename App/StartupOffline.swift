@@ -307,8 +307,8 @@ extension MyViewController {
   func embedOfflineCourseListIfNeeded() {
     guard embeddedOfflineCourseListNavController == nil else { return }
 
-    let courses = ScormUtils.loadAllCourses()
-    let courseListVC = ScormCourseListViewController(courses: courses)
+    let items = ScormUtils.loadOfflineLibraryItems()
+    let courseListVC = ScormCourseListViewController(items: items)
     let nav = UINavigationController(rootViewController: courseListVC)
     nav.setNavigationBarHidden(false, animated: false)
 
@@ -328,8 +328,8 @@ extension MyViewController {
   }
 
   func refreshOfflineCourseList() {
-    let courses = ScormUtils.loadAllCourses()
-    let courseListVC = ScormCourseListViewController(courses: courses)
+    let items = ScormUtils.loadOfflineLibraryItems()
+    let courseListVC = ScormCourseListViewController(items: items)
     embeddedOfflineCourseListNavController?.setViewControllers([courseListVC], animated: false)
     embeddedOfflineCourseListNavController?.setNavigationBarHidden(false, animated: false)
   }

@@ -201,3 +201,12 @@
 "scorm_player.score_unavailable.message" = "No pudimos leer la información de puntuación de la lección para este curso.";
 "scorm_player.progress_save_error.title" = "Error al guardar el progreso";
 "scorm_player.progress_save_error.message" = "No se pudo guardar correctamente el progreso de la lección.";
+
+"offline_content.unsupported.title" = "Archivo no compatible";
+"offline_content.unsupported.message" = "Este tipo de archivo no es compatible actualmente.";
+"offline_content.type.scorm" = "Curso SCORM";
+"offline_content.type.video" = "Video";
+"offline_content.type.pdf" = "PDF";
+"offline_content.type.document" = "Documento";
+"offline_content.type.web" = "Contenido web";
+"offline_content.type.unsupported" = "No compatible";

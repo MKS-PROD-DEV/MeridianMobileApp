@@ -63,8 +63,8 @@ extension MyViewController {
   }
 
   func presentCourseList() {
-    let courses = ScormUtils.loadAllCourses()
-    let viewController = ScormCourseListViewController(courses: courses)
+    let items = ScormUtils.loadOfflineLibraryItems()
+    let viewController = ScormCourseListViewController(items: items)
     let nav = UINavigationController(rootViewController: viewController)
     AppTheme.applyNavigationBarAppearance(to: nav)
     nav.modalPresentationStyle = .pageSheet

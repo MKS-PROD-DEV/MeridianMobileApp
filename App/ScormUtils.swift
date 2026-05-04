@@ -197,6 +197,83 @@ final class ScormUtils {
     parseManifest(manifestXML: manifestXML)?.firstSco?.href
   }
 
+    static func loadOfflineLibraryItems() -> [OfflineLibraryItem] {
+      let fmanager = FileManager.default
+      let root = assetsRootURL()
+
+      guard
+        let items = try? fmanager.contentsOfDirectory(
+          at: root,
+          includingPropertiesForKeys: [.isDirectoryKey],
+          options: [.skipsHiddenFiles]
+        )
+      else {
+        return []
+      }
+
+      var results: [OfflineLibraryItem] = []
+
+      for url in items.sorted(by: {
+        $0.lastPathComponent.localizedCaseInsensitiveCompare($1.lastPathComponent) == .orderedAscending
+      }) {
+        let values = try? url.resourceValues(forKeys: [.isDirectoryKey])
+        guard values?.isDirectory == true else { continue }
+
+        let assetId = url.lastPathComponent
+
+        if zipFileURL(in: url) != nil {
+          if let course = try? loadCourse(assetId: assetId) {
+            results.append(.scorm(course))
+          }
+          continue
+        }
+
+        let fileItems = loadOfflineFiles(assetId: assetId, in: url)
+        results.append(contentsOf: fileItems.map { .file($0) })
+      }
+
+      return results
+    }
+
+    static func loadOfflineFiles(assetId: String, in directory: URL) -> [OfflineContentItem] {
+      let fmanager = FileManager.default
+
+      guard
+        let enumerator = fmanager.enumerator(
+          at: directory,
+          includingPropertiesForKeys: [.isRegularFileKey],
+          options: [.skipsHiddenFiles]
+        )
+      else {
+        return []
+      }
+
+      var items: [OfflineContentItem] = []
+
+      for case let fileURL as URL in enumerator {
+        let values = try? fileURL.resourceValues(forKeys: [.isRegularFileKey])
+        guard values?.isRegularFile == true else { continue }
+
+        let type = OfflineContentType.from(fileURL: fileURL)
+        guard type != .unsupported else { continue }
+
+        let title = fileURL.deletingPathExtension().lastPathComponent
+
+        items.append(
+          OfflineContentItem(
+            assetId: assetId,
+            title: title,
+            fileURL: fileURL,
+            type: type
+          )
+        )
+      }
+
+      return items.sorted {
+        $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+      }
+    }
+
   private static func zipFileURL(in directory: URL) -> URL? {
     let fmanager = FileManager.default
 
