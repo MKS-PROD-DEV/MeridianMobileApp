@@ -227,7 +227,7 @@ final class InitialSiteSelectionViewController: UIViewController, PHPickerViewCo
 
   private func extractQRCodeString(from image: UIImage) -> String? {
     guard let ciImage = CIImage(image: image),
-          let detector else { return nil }
+      let detector else { return nil }
 
     let features = detector.features(in: ciImage)
     let qrFeature = features.compactMap { $0 as? CIQRCodeFeature }.first
@@ -236,7 +236,7 @@ final class InitialSiteSelectionViewController: UIViewController, PHPickerViewCo
 
   private func handleScannedQRCodeString(_ scannedString: String) {
     guard let url = URL(string: scannedString),
-          let branding = Branding.from(siteURL: url) else {
+      let branding = Branding.from(siteURL: url) else {
       presentUnknownSiteAlert()
       return
     }

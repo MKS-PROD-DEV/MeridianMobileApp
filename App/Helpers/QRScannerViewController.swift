@@ -108,8 +108,8 @@ final class QRScannerViewController: UIViewController, AVCaptureMetadataOutputOb
     from connection: AVCaptureConnection
   ) {
     guard !hasScannedCode,
-          let metadataObject = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
-          metadataObject.type == .qr,
+      let metadataObject = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
+        metadataObject.type == .qr,
           let stringValue = metadataObject.stringValue else {
       return
     }
